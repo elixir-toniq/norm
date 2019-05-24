@@ -1,140 +1,214 @@
-defmodule Norm do
-  @moduledoc """
-  Norm provides a set of functions for specifying data.
-  """
-
-  alias Norm.Spec
-
-  defmodule MismatchError do
-    defexception [:message]
-
-    def exception(errors) do
-      msg =
-        errors
-        |> Enum.join("\n")
-
-      %__MODULE__{message: msg}
+defmodule Norm.Spec do
+  def conform(spec, input) do
+    # If we get errors then we should convert them to messages. Otherwise
+    # we just let good results fall through.
+    with {:error, errors} <- do_conform(spec, [], input) do
+      {:error, Enum.map(errors, &error_to_msg/1)}
     end
   end
 
-  defmodule GeneratorError do
-    defexception [:message]
+  defp do_conform(%{f: f, predicate: pred}, path, input) do
+    case f.(input) do
+      true ->
+        {:ok, input}
 
-    def exception(predicate) do
-      msg = "Unable to create a generator for: #{predicate}"
-      %__MODULE__{message: msg}
+      false ->
+        {:error, [error(path, input, pred)]}
+
+      _ ->
+        raise ArgumentError, "Predicates must return a boolean value"
     end
   end
 
-  # iex> conform!(1, lit(1))
-  # 1
-  # iex> conform!("string", lit("string"))
-  # "string"
-  # iex> conform!(:atom, lit(:atom))
-  # :atom
-  # iex> conform(:atom, lit("string"))
-  # {:error, ["val: :atom fails: \"string\""]}
-  # iex> conform(1, string?())
-  # {:error, ["val: 1 fails: string?()"]}
-  # iex> conform!("foo", string?())
-  # "foo"
+  def gen(%{generator: gen, predicate: pred}) do
+    case gen do
+      :is_integer ->
+        {:ok, StreamData.integer()}
+
+      :is_binary ->
+        {:ok, StreamData.binary()}
+
+      _ ->
+        {:error, pred}
+    end
+  end
+
+  # def build({:or, _, [left, right]}) do
+  #   l = build(left)
+  #   r = build(right)
+
+  #   quote do
+  #     %Or{left: unquote(l), right: unquote(r)}
+  #   end
+  # end
+
+  # def build({:and, _, [left, right]}) do
+  #   l = build(left)
+  #   r = build(right)
+
+  #   quote do
+  #     %And{left: unquote(l), right: unquote(r)}
+  #   end
+  # end
+
+  # def build(int) when is_integer(int) do
+  #   quote do
+  #     unquote(int)
+  #   end
+  # end
+
+  # def build({a, b}) do
+  #   IO.inspect([a, b], label: "Two Tuple")
+  #   l = build(a)
+  #   r = build(b)
+
+  #   quote do
+  #     %Tuple{args: [unquote(l), unquote(r)]}
+  #   end
+  # end
+
+  # def build({:{}, _, args}) do
+  #   args = Enum.map(args, &build/1)
+
+  #   quote do
+  #     %Tuple{args: unquote(args)}
+  #   end
+  # end
+
+  # Anonymous functions
+  def build(quoted={f, _, _args}) when f in [:&, :fn] do
+    predicate = Macro.to_string(quoted)
+
+    quote do
+      run = fn input ->
+        input |> unquote(quoted).()
+      end
+
+      %{generator: nil, predicate: unquote(predicate), f: run}
+    end
+  end
+
+  # Standard functions
+  def build(quoted={a, _, args}) when is_atom(a) and is_list(args) do
+    predicate = Macro.to_string(quoted)
+
+    quote do
+      run = fn input ->
+        input |> unquote(quoted)
+      end
+
+      %{predicate: unquote(predicate), f: run, generator: unquote(a)}
+    end
+  end
+
+  def build(quoted) do
+    raise ArgumentError, "Norm has screwed up"
+    IO.inspect(quoted, label: "Missed one")
+    quoted
+  end
+
+  defp error(path, input, msg) do
+    %{path: path, input: input, msg: msg, at: nil}
+  end
+
+  def error_to_msg(%{path: path, input: input, msg: msg, at: at}) do
+    path  = if path == [], do: nil, else: "in: " <> build_path(path)
+    at    = if at == nil, do: nil, else: "at: :#{at}"
+    val   = "val: #{format_val(input)}"
+    fails = "fails: #{msg}"
+
+    [path, at, val, fails]
+    |> Enum.reject(&is_nil/1)
+    |> Enum.join(" ")
+  end
+
+  defp build_path(keys) do
+    keys
+    |> Enum.map(&format_val/1)
+    |> Enum.join("/")
+  end
+
+  defp format_val(nil), do: "nil"
+  defp format_val(msg) when is_binary(msg), do: "\"#{msg}\""
+  defp format_val(msg) when is_boolean(msg), do: "#{msg}"
+  defp format_val(msg) when is_atom(msg), do: ":#{msg}"
+  defp format_val(val) when is_map(val), do: inspect val
+  defp format_val({:index, i}), do: "[#{i}]"
+  defp format_val(msg), do: "#{msg}"
+
+  # @doc ~S"""
+  # """
+  # def lit(val) do
+  #   fn path, input ->
+  #     if input == val do
+  #       {:ok, input}
+  #     else
+  #       {:error, [error(path, input, format_val(val))]}
+  #     end
+  #   end
+  # end
+  # def string? do
+  #   fn path, input ->
+  #     if is_binary(input) do
+  #       {:ok, input}
+  #     else
+  #       {:error, [error(path, input, "string?()")]}
+  #     end
+  #   end
+  # end
+
+  # @doc ~S"""
+  # Ands together two specs.
 
   # iex> conform(:atom, sand(string?(), lit("foo")))
   # {:error, ["val: :atom fails: string?()", "val: :atom fails: \"foo\""]}
   # iex> conform!("foo", sand(string?(), lit("foo")))
   # "foo"
+  # """
+  # def sand(l, r) do
+  #   fn path, input ->
+  #     errors =
+  #       [l, r]
+  #       |> Enum.map(fn spec -> spec.(path, input) end)
+  #       |> Enum.filter(fn {result, _} -> result == :error end)
+  #       |> Enum.flat_map(fn {_, msg} -> msg end)
+
+  #     if Enum.any?(errors) do
+  #       {:error, errors}
+  #     else
+  #       {:ok, input}
+  #     end
+  #   end
+  # end
+
+  # @doc ~S"""
+  # Ors two specs together
+
   # iex> conform!("foo", sor(string?(), integer?()))
   # "foo"
   # iex> conform!(1, sor(string?(), integer?()))
   # 1
   # iex> conform(:atom, sor(string?(), integer?()))
   # {:error, ["val: :atom fails: string?()", "val: :atom fails: integer?()"]}
+  # """
+  # def sor(l, r) do
+  #   fn path, input ->
+  #     case l.(path, input) do
+  #       {:ok, input} ->
+  #         {:ok, input}
 
-  @doc ~S"""
-  Verifies that the payload conforms to the specification
+  #       {:error, l_errors} ->
+  #         # credo:disable-for-next-line /\.Nesting/
+  #         case r.(path, input) do
+  #           {:ok, input} ->
+  #             {:ok, input}
 
-  iex> conform(42, is_integer())
-  {:ok, 42}
-  iex> conform(42, fn x -> x == 42 end)
-  {:ok, 42}
-  iex> conform(42, &(&1 >= 0))
-  {:ok, 42}
-  iex> conform(42, &(&1 >= 100))
-  {:error, ["val: 42 fails: &(&1 >= 100)"]}
-  iex> conform("foo", is_integer())
-  {:error, ["val: \"foo\" fails: is_integer()"]}
-  """
-  defmacro conform(input, predicate) do
-    spec = Spec.build(predicate)
-
-    quote bind_quoted: [spec: spec, input: input] do
-      Spec.conform(spec, input)
-    end
-  end
-
-  @doc ~S"""
-  Verifies that the payload conforms to the specification or raises a Mismatch
-  error
-  iex> conform!(42, is_integer())
-  42
-  iex> conform!("foo", is_integer())
-  ** (Norm.MismatchError) val: "foo" fails: is_integer()
-  """
-  defmacro conform!(input, predicate) do
-    spec = Spec.build(predicate)
-
-    quote bind_quoted: [spec: spec, input: input] do
-      case Spec.conform(spec, input) do
-        {:ok, input} -> input
-        {:error, errors} -> raise MismatchError, errors
-      end
-    end
-  end
-
-  @doc ~S"""
-  Checks if the value conforms to the spec and returns a boolean.
-
-  iex> valid?(42,  is_integer())
-  true
-  iex> valid?("foo",  is_integer())
-  false
-  """
-  defmacro valid?(input, predicate) do
-    spec = Spec.build(predicate)
-
-    quote bind_quoted: [spec: spec, input: input] do
-      case Spec.conform(spec, input) do
-        {:ok, _}    -> true
-        {:error, _} -> false
-      end
-    end
-  end
-
-  @doc ~S"""
-  Creates a generator from a spec or predicate.
-
-  iex> gen(is_integer()) |> Enum.take(3) |> Enum.all?(&is_integer/1)
-  true
-  iex> gen(is_binary()) |> Enum.take(3) |> Enum.all?(&is_binary/1)
-  true
-  iex> gen(&(&1 > 0))
-  ** (Norm.GeneratorError) Unable to create a generator for: &(&1 > 0)
-  """
-  defmacro gen(predicate) do
-    spec = Spec.build(predicate)
-
-    quote bind_quoted: [spec: spec] do
-      case Spec.gen(spec) do
-        {:ok, generator} -> generator
-        {:error, error} -> raise GeneratorError, error
-      end
-    end
-  end
-
-
-
-
-
+  #           {:error, r_errors} ->
+  #             {:error, l_errors ++ r_errors}
+  #         end
+  #     end
+  #   end
+  # end
 
   # @doc ~S"""
   # Creates a spec for keyable things such as maps
@@ -282,4 +356,3 @@ defmodule Norm do
   #   end
   # end
 end
-
