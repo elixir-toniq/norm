@@ -1,108 +1,179 @@
 defmodule Norm do
-  defmodule Mismatch do
-    def new(path, input, predicate) do
-      %{path: path, input: input, predicate: predicate}
+  @moduledoc """
+  Norm provides a set of functions for specifying data.
+  """
+
+  alias Norm.Conformer
+  alias Norm.Generatable
+  alias Norm.Spec
+  alias Norm.Schema
+
+  defmodule MismatchError do
+    defexception [:message]
+
+    def exception(errors) do
+      msg =
+        errors
+        |> Enum.join("\n")
+
+      %__MODULE__{message: msg}
     end
   end
 
-  def conform(spec, input) do
-    path = []
+  defmodule GeneratorError do
+    defexception [:message]
+
+    def exception(predicate) do
+      msg = "Unable to create a generator for: #{predicate}"
+      %__MODULE__{message: msg}
+    end
   end
 
-  defmacro __using__(_) do
+  @doc ~S"""
+  Verifies that the payload conforms to the specification
+  """
+  def conform(input, spec) do
+    Conformer.conform(spec, input)
+  end
+
+  @doc ~S"""
+  Verifies that the payload conforms to the specification or raises a Mismatch
+  error
+  """
+  def conform!(input, spec) do
+    case Conformer.conform(spec, input) do
+      {:ok, input} -> input
+      {:error, errors} -> raise MismatchError, errors
+    end
+  end
+
+  @doc ~S"""
+  Checks if the value conforms to the spec and returns a boolean.
+
+  iex> valid?(42,  spec(is_integer()))
+  true
+  iex> valid?("foo",  spec(is_integer()))
+  false
+  """
+  def valid?(input, spec) do
+    case Conformer.conform(spec, input) do
+      {:ok, _}    -> true
+      {:error, _} -> false
+    end
+  end
+
+  @doc ~S"""
+  Creates a generator from a spec or predicate.
+
+  iex> gen(spec(is_integer())) |> Enum.take(3) |> Enum.all?(&is_integer/1)
+  true
+  iex> gen(spec(is_binary())) |> Enum.take(3) |> Enum.all?(&is_binary/1)
+  true
+  iex> gen(spec(&(&1 > 0)))
+  ** (Norm.GeneratorError) Unable to create a generator for: &(&1 > 0)
+  """
+  def gen(spec) do
+    case Generatable.gen(spec) do
+      {:ok, generator} -> generator
+      {:error, error} -> raise GeneratorError, error
+    end
+  end
+
+  @doc ~S"""
+  Creates a re-usable schema
+
+  iex> conform!(%{name: "Chris"}, schema(%{name: spec(is_binary())}))
+  %{name: "Chris"}
+  """
+  defmacro spec(predicate) do
+    spec = Spec.build(predicate)
+
     quote do
-      import unquote(__MODULE__)
-
-      Module.register_attribute(__MODULE__, :schemas, accumulate: true)
+      unquote(spec)
     end
   end
 
-  defmacro req(key, spec) when is_atom(key) do
+  @doc ~S"""
+  Creates a re-usable schema.
+  """
+  def schema(input) do
+    Schema.build(input)
   end
 
-  def schema(opts) do
-    reqs =
-      opts
-      |> Keyword.get(:reqs, [])
-      |> Enum.map(&req_key/1)
+  # @doc ~S"""
+  # Concatenates a sequence of predicates or patterns together. These predicates
+  # must be tagged with an atom. The conformed data is returned as a
+  # keyword list.
 
-    opts =
-      opts
-      |> Keyword.get(:opts, [])
-      |> Enum.map(&opt_key/1)
+  # iex> conform!([31, "Chris"], cat(age: integer?(), name: string?()))
+  # [age: 31, name: "Chris"]
+  # iex> conform([true, "Chris"], cat(age: integer?(), name: string?()))
+  # {:error, ["in: [0] at: :age val: true fails: integer?()"]}
+  # iex> conform([31, :chris], cat(age: integer?(), name: string?()))
+  # {:error, ["in: [1] at: :name val: :chris fails: string?()"]}
+  # iex> conform([31], cat(age: integer?(), name: string?()))
+  # {:error, ["in: [1] at: :name val: nil fails: Insufficient input"]}
+  # """
+  # def cat(opts) do
+  #   fn path, input ->
+  #     results =
+  #       opts
+  #       |> Enum.with_index
+  #       |> Enum.map(fn {{tag, spec}, i} ->
+  #         val = Enum.at(input, i)
+  #         if val do
+  #           {tag, spec.(path ++ [{:index, i}], val)}
+  #         else
+  #           {tag, {:error, [error(path ++ [{:index, i}], nil, "Insufficient input")]}}
+  #         end
+  #       end)
 
-    keys = reqs ++ opts
+  #     errors =
+  #       results
+  #       |> Enum.filter(fn {_, {result, _}} -> result == :error end)
+  #       |> Enum.map(fn {tag, {_, errors}} -> {tag, errors} end)
+  #       |> Enum.flat_map(fn {tag, errors} -> Enum.map(errors, &(%{&1 | at: tag})) end)
 
-    fn path, input ->
-      keys
-    end
-  end
+  #     if Enum.any?(errors) do
+  #       {:error, errors}
+  #     else
+  #       {:ok, Enum.map(results, fn {tag, {_, data}} -> {tag, data} end)}
+  #     end
+  #   end
+  # end
 
-  defp req_key({key, spec}) do
-    fn path, input ->
-      actual = input[key]
+  # @doc ~S"""
+  # Choices between alternative predicates or patterns. The patterns must be tagged with an atom.
+  # When conforming data to this specification the data is returned as a tuple with the tag.
 
-      if is_nil(actual) do
-        {:error, Mismatch.new(path ++ [key], input, "required")}
-      else
-        {:ok, spec.(path ++ [key], actual)}
-      end
-    end
-  end
+  # iex> conform!(123, alt(num: integer?(), str: string?()))
+  # {:num, 123}
+  # iex> conform!("foo", alt(num: integer?(), str: string?()))
+  # {:str, "foo"}
+  # iex> conform(true, alt(num: integer?(), str: string?()))
+  # {:error, ["in: :num val: true fails: integer?()", "in: :str val: true fails: string?()"]}
+  # """
+  # def alt(opts) do
+  #   fn path, input ->
+  #     results =
+  #       opts
+  #       |> Enum.map(fn {tag, spec} -> {tag, spec.(path ++ [tag], input)} end)
 
-  defp opt_key({key, spec}) do
-    fn path, input ->
-      actual = input[key]
+  #     good_result =
+  #       results
+  #       |> Enum.find(fn {_, {result, _}} -> result == :ok end)
 
-      if is_nil(actual) do
-        {:ok, input}
-      else
-        {:ok, spec.(path ++ [key], actual)}
-      end
-    end
-  end
+  #     if good_result do
+  #       {tag, {:ok, data}} = good_result
+  #       {:ok, {tag, data}}
+  #     else
+  #       errors =
+  #         results
+  #         |> Enum.flat_map(fn {_, {_, errors}} -> errors end)
 
-  defmacro req(key, predicate) when is_atom(key) do
-    quote do
-    end
-  end
-
-  def integer?() do
-    fn path, input ->
-      case is_integer(input) do
-        true  -> {:ok, input}
-        false -> Mismatch.new(path, input, "integer?")
-      end
-    end
-  end
-
-  def string?() do
-    fn path, input ->
-      case is_binary(input) do
-        true  -> {:ok, input}
-        false -> Mismatch.new(path, input, "string?")
-      end
-    end
-  end
-
-  def lit(literal) do
-    fn path, input ->
-      if literal == input do
-        {:ok, input}
-      else
-        Mismatch.new(path, input, "string?")
-      end
-    end
-  end
-
-  def re_matches?(regex) do
-    fn path, input when is_binary(input) ->
-      if String.match?(input, regex) do
-        {:ok, input}
-      else
-        Mismatch.new(path, input, "re_matches?#{inspect regex}")
-      end
-    end
-  end
+  #       {:error, errors}
+  #     end
+  #   end
+  # end
 end
 
