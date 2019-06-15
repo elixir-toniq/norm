@@ -1,35 +1,23 @@
 defmodule Norm.Spec do
-  def conform(spec, input) do
-    # If we get errors then we should convert them to messages. Otherwise
-    # we just let good results fall through.
-    with {:error, errors} <- do_conform(spec, [], input) do
-      {:error, Enum.map(errors, &error_to_msg/1)}
-    end
-  end
+  @moduledoc false
+  # Provides a struct to encapsulate specs
 
-  defp do_conform(%{f: f, predicate: pred}, path, input) do
-    case f.(input) do
-      true ->
-        {:ok, input}
+  alias __MODULE__
 
-      false ->
-        {:error, [error(path, input, pred)]}
+  defstruct predicate: nil, generator: nil, f: nil
 
-      _ ->
-        raise ArgumentError, "Predicates must return a boolean value"
-    end
-  end
+  defimpl Norm.Generatable do
+    def gen(%{generator: gen, predicate: pred}) do
+      case gen do
+        :is_integer ->
+          {:ok, StreamData.integer()}
 
-  def gen(%{generator: gen, predicate: pred}) do
-    case gen do
-      :is_integer ->
-        {:ok, StreamData.integer()}
+        :is_binary ->
+          {:ok, StreamData.binary()}
 
-      :is_binary ->
-        {:ok, StreamData.binary()}
-
-      _ ->
-        {:error, pred}
+        _ ->
+          {:error, pred}
+      end
     end
   end
 
@@ -84,7 +72,7 @@ defmodule Norm.Spec do
         input |> unquote(quoted).()
       end
 
-      %{generator: nil, predicate: unquote(predicate), f: run}
+      %Spec{generator: nil, predicate: unquote(predicate), f: run}
     end
   end
 
@@ -97,44 +85,15 @@ defmodule Norm.Spec do
         input |> unquote(quoted)
       end
 
-      %{predicate: unquote(predicate), f: run, generator: unquote(a)}
+      %Spec{predicate: unquote(predicate), f: run, generator: unquote(a)}
     end
   end
 
   def build(quoted) do
-    raise ArgumentError, "Norm has screwed up"
     IO.inspect(quoted, label: "Missed one")
+    raise ArgumentError, "Norm has screwed up"
     quoted
   end
-
-  defp error(path, input, msg) do
-    %{path: path, input: input, msg: msg, at: nil}
-  end
-
-  def error_to_msg(%{path: path, input: input, msg: msg, at: at}) do
-    path  = if path == [], do: nil, else: "in: " <> build_path(path)
-    at    = if at == nil, do: nil, else: "at: :#{at}"
-    val   = "val: #{format_val(input)}"
-    fails = "fails: #{msg}"
-
-    [path, at, val, fails]
-    |> Enum.reject(&is_nil/1)
-    |> Enum.join(" ")
-  end
-
-  defp build_path(keys) do
-    keys
-    |> Enum.map(&format_val/1)
-    |> Enum.join("/")
-  end
-
-  defp format_val(nil), do: "nil"
-  defp format_val(msg) when is_binary(msg), do: "\"#{msg}\""
-  defp format_val(msg) when is_boolean(msg), do: "#{msg}"
-  defp format_val(msg) when is_atom(msg), do: ":#{msg}"
-  defp format_val(val) when is_map(val), do: inspect val
-  defp format_val({:index, i}), do: "[#{i}]"
-  defp format_val(msg), do: "#{msg}"
 
   # @doc ~S"""
   # """
@@ -355,4 +314,22 @@ defmodule Norm.Spec do
   #     end
   #   end
   # end
+  defimpl Norm.Conformer.Conformable do
+    def conform(%{f: f, predicate: pred}, path, input) do
+      case f.(input) do
+        true ->
+          {:ok, input}
+
+        false ->
+          {:error, [error(path, input, pred)]}
+
+        _ ->
+          raise ArgumentError, "Predicates must return a boolean value"
+      end
+    end
+
+    def error(path, input, msg) do
+      %{path: path, input: input, msg: msg, at: nil}
+    end
+  end
 end

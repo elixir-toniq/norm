@@ -3,7 +3,10 @@ defmodule Norm do
   Norm provides a set of functions for specifying data.
   """
 
+  alias Norm.Conformer
+  alias Norm.Generatable
   alias Norm.Spec
+  alias Norm.Schema
 
   defmodule MismatchError do
     defexception [:message]
@@ -26,185 +29,76 @@ defmodule Norm do
     end
   end
 
-  # iex> conform!(1, lit(1))
-  # 1
-  # iex> conform!("string", lit("string"))
-  # "string"
-  # iex> conform!(:atom, lit(:atom))
-  # :atom
-  # iex> conform(:atom, lit("string"))
-  # {:error, ["val: :atom fails: \"string\""]}
-  # iex> conform(1, string?())
-  # {:error, ["val: 1 fails: string?()"]}
-  # iex> conform!("foo", string?())
-  # "foo"
-
-  # iex> conform(:atom, sand(string?(), lit("foo")))
-  # {:error, ["val: :atom fails: string?()", "val: :atom fails: \"foo\""]}
-  # iex> conform!("foo", sand(string?(), lit("foo")))
-  # "foo"
-  # iex> conform!("foo", sor(string?(), integer?()))
-  # "foo"
-  # iex> conform!(1, sor(string?(), integer?()))
-  # 1
-  # iex> conform(:atom, sor(string?(), integer?()))
-  # {:error, ["val: :atom fails: string?()", "val: :atom fails: integer?()"]}
-
   @doc ~S"""
   Verifies that the payload conforms to the specification
-
-  iex> conform(42, is_integer())
-  {:ok, 42}
-  iex> conform(42, fn x -> x == 42 end)
-  {:ok, 42}
-  iex> conform(42, &(&1 >= 0))
-  {:ok, 42}
-  iex> conform(42, &(&1 >= 100))
-  {:error, ["val: 42 fails: &(&1 >= 100)"]}
-  iex> conform("foo", is_integer())
-  {:error, ["val: \"foo\" fails: is_integer()"]}
   """
-  defmacro conform(input, predicate) do
-    spec = Spec.build(predicate)
-
-    quote bind_quoted: [spec: spec, input: input] do
-      Spec.conform(spec, input)
-    end
+  def conform(input, spec) do
+    Conformer.conform(spec, input)
   end
 
   @doc ~S"""
   Verifies that the payload conforms to the specification or raises a Mismatch
   error
-  iex> conform!(42, is_integer())
-  42
-  iex> conform!("foo", is_integer())
-  ** (Norm.MismatchError) val: "foo" fails: is_integer()
   """
-  defmacro conform!(input, predicate) do
-    spec = Spec.build(predicate)
-
-    quote bind_quoted: [spec: spec, input: input] do
-      case Spec.conform(spec, input) do
-        {:ok, input} -> input
-        {:error, errors} -> raise MismatchError, errors
-      end
+  def conform!(input, spec) do
+    case Conformer.conform(spec, input) do
+      {:ok, input} -> input
+      {:error, errors} -> raise MismatchError, errors
     end
   end
 
   @doc ~S"""
   Checks if the value conforms to the spec and returns a boolean.
 
-  iex> valid?(42,  is_integer())
+  iex> valid?(42,  spec(is_integer()))
   true
-  iex> valid?("foo",  is_integer())
+  iex> valid?("foo",  spec(is_integer()))
   false
   """
-  defmacro valid?(input, predicate) do
-    spec = Spec.build(predicate)
-
-    quote bind_quoted: [spec: spec, input: input] do
-      case Spec.conform(spec, input) do
-        {:ok, _}    -> true
-        {:error, _} -> false
-      end
+  def valid?(input, spec) do
+    case Conformer.conform(spec, input) do
+      {:ok, _}    -> true
+      {:error, _} -> false
     end
   end
 
   @doc ~S"""
   Creates a generator from a spec or predicate.
 
-  iex> gen(is_integer()) |> Enum.take(3) |> Enum.all?(&is_integer/1)
+  iex> gen(spec(is_integer())) |> Enum.take(3) |> Enum.all?(&is_integer/1)
   true
-  iex> gen(is_binary()) |> Enum.take(3) |> Enum.all?(&is_binary/1)
+  iex> gen(spec(is_binary())) |> Enum.take(3) |> Enum.all?(&is_binary/1)
   true
-  iex> gen(&(&1 > 0))
+  iex> gen(spec(&(&1 > 0)))
   ** (Norm.GeneratorError) Unable to create a generator for: &(&1 > 0)
   """
-  defmacro gen(predicate) do
-    spec = Spec.build(predicate)
-
-    quote bind_quoted: [spec: spec] do
-      case Spec.gen(spec) do
-        {:ok, generator} -> generator
-        {:error, error} -> raise GeneratorError, error
-      end
+  def gen(spec) do
+    case Generatable.gen(spec) do
+      {:ok, generator} -> generator
+      {:error, error} -> raise GeneratorError, error
     end
   end
 
+  @doc ~S"""
+  Creates a re-usable schema
 
+  iex> conform!(%{name: "Chris"}, schema(%{name: spec(is_binary())}))
+  %{name: "Chris"}
+  """
+  defmacro spec(predicate) do
+    spec = Spec.build(predicate)
 
+    quote do
+      unquote(spec)
+    end
+  end
 
-
-
-  # @doc ~S"""
-  # Creates a spec for keyable things such as maps
-
-  # iex> conform!(%{foo: "foo"}, keys(req: [foo: string?()]))
-  # %{foo: "foo"}
-  # iex> conform!(%{foo: "foo", bar: "bar"}, keys(req: [foo: string?()]))
-  # %{foo: "foo"}
-  # iex> conform!(%{"foo" => "foo", bar: "bar"}, keys(req: [{"foo", string?()}]))
-  # %{"foo" => "foo"}
-  # iex> conform!(%{foo: "foo"}, keys(req: [foo: string?()], opt: [bar: string?()]))
-  # %{foo: "foo"}
-  # iex> conform!(%{foo: "foo", bar: "bar"}, keys(req: [foo: string?()], opt: [bar: string?()]))
-  # %{foo: "foo", bar: "bar"}
-  # iex> conform(%{}, keys(req: [foo: string?()]))
-  # {:error, ["in: :foo val: %{} fails: :required"]}
-  # iex> conform(%{foo: 123, bar: "bar"}, keys(req: [foo: string?()]))
-  # {:error, ["in: :foo val: 123 fails: string?()"]}
-  # iex> conform(%{foo: 123, bar: 321}, keys(req: [foo: string?()], opt: [bar: string?()]))
-  # {:error, ["in: :foo val: 123 fails: string?()", "in: :bar val: 321 fails: string?()"]}
-  # iex> conform!(%{foo: "foo", bar: %{baz: "baz"}}, keys(req: [foo: string?(), bar: keys(req: [baz: lit("baz")])]))
-  # %{foo: "foo", bar: %{baz: "baz"}}
-  # iex> conform(%{foo: 123, bar: %{baz: 321}}, keys(req: [foo: string?()], opt: [bar: string?()]))
-  # iex> conform(%{foo: 123, bar: %{baz: 321}}, keys(req: [foo: string?(), bar: keys(req: [baz: lit("baz")])]))
-  # {:error, ["in: :foo val: 123 fails: string?()", "in: :bar/:baz val: 321 fails: \"baz\""]}
-  # """
-  # def keys(specs) do
-  #   reqs = Keyword.get(specs, :req, [])
-  #   opts = Keyword.get(specs, :opt, [])
-
-  #   fn path, input ->
-  #     req_keys = Enum.map(reqs, fn {key, _} -> key end)
-  #     opt_keys = Enum.map(opts, fn {key, _} -> key end)
-
-  #     req_errors =
-  #       reqs
-  #       |> Enum.map(fn {key, spec} ->
-  #         # credo:disable-for-next-line /\.Nesting/
-  #         if Map.has_key?(input, key) do
-  #           {key, spec.(path ++ [key], input[key])}
-  #         else
-  #           {key, {:error, [error(path ++ [key], input, ":required")]}}
-  #         end
-  #       end)
-  #       |> Enum.filter(fn {_, {result, _}} -> result == :error end)
-  #       |> Enum.flat_map(fn {_, {_, errors}} -> errors end)
-
-  #     opt_errors =
-  #       opts
-  #       |> Enum.map(fn {key, spec} ->
-  #         # credo:disable-for-next-line /\.Nesting/
-  #         if Map.has_key?(input, key) do
-  #           {key, spec.(path ++ [key], input[key])}
-  #         else
-  #           {key, {:ok, nil}}
-  #         end
-  #       end)
-  #       |> Enum.filter(fn {_, {result, _}} -> result == :error end)
-  #       |> Enum.flat_map(fn {_, {_, errors}} -> errors end)
-
-  #     errors = req_errors ++ opt_errors
-  #     keys = req_keys ++ opt_keys
-
-  #     if Enum.any?(errors) do
-  #       {:error, errors}
-  #     else
-  #       {:ok, Map.take(input, keys)}
-  #     end
-  #   end
-  # end
+  @doc ~S"""
+  Creates a re-usable schema.
+  """
+  def schema(input) do
+    Schema.build(input)
+  end
 
   # @doc ~S"""
   # Concatenates a sequence of predicates or patterns together. These predicates
