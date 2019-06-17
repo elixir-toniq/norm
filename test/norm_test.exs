@@ -3,34 +3,12 @@ defmodule NormTest do
   doctest Norm, import: true
   import Norm
 
-  describe "schema/1" do
-    test "creates a re-usable schema" do
-      s = schema(%{name: spec(is_binary())})
-      assert %{name: "Chris"} == conform!(%{name: "Chris"}, s)
-      assert {:error, _errors} = conform(%{foo: "bar"}, s)
-      assert {:error, _errors} = conform(%{name: 123}, s)
-
-      user = schema(%{user: schema(%{name: spec(is_binary())})})
-      assert %{user: %{name: "Chris"}} == conform!(%{user: %{name: "Chris"}}, user)
-    end
-  end
-
   describe "conform/2" do
     test "returns the correct data or exceptions" do
       # iex> conform(:atom, sand(string?(), lit("foo")))
       # {:error, ["val: :atom fails: string?()", "val: :atom fails: \"foo\""]}
       # iex> conform(:atom, sor(string?(), integer?()))
       # {:error, ["val: :atom fails: string?()", "val: :atom fails: integer?()"]}
-      # iex> conform(42, is_integer())
-      # {:ok, 42}
-      # iex> conform(42, fn x -> x == 42 end)
-      # {:ok, 42}
-      # iex> conform(42, &(&1 >= 0))
-      # {:ok, 42}
-      # iex> conform(42, &(&1 >= 100))
-      # {:error, ["val: 42 fails: &(&1 >= 100)"]}
-      # iex> conform("foo", is_integer())
-      # {:error, ["val: \"foo\" fails: is_integer()"]}
   # iex> conform(:atom, lit("string"))
   # {:error, ["val: :atom fails: \"string\""]}
   # iex> conform(1, string?())
@@ -64,6 +42,64 @@ defmodule NormTest do
 
     test "returns an error if the generator can not be found" do
 
+    end
+  end
+
+  describe "schema/1" do
+    test "creates a re-usable schema" do
+      s = schema(%{name: spec(is_binary())})
+      assert %{name: "Chris"} == conform!(%{name: "Chris"}, s)
+      assert {:error, _errors} = conform(%{foo: "bar"}, s)
+      assert {:error, _errors} = conform(%{name: 123}, s)
+
+      user = schema(%{user: schema(%{name: spec(is_binary())})})
+      assert %{user: %{name: "Chris"}} == conform!(%{user: %{name: "Chris"}}, user)
+    end
+  end
+
+  describe "selection/1" do
+    @tag :skip
+    test "returns an error if passed a non-schema" do
+      flunk "Not implemented yet"
+    end
+
+    @tag :skip
+    test "specifies a subset of a schema" do
+      flunk "Not implemented yet"
+    end
+  end
+
+  describe "alt/1" do
+    test "returns errors" do
+      spec = alt(a: schema(%{name: spec(is_binary())}), b: spec(is_binary()))
+
+      assert {:a, %{name: "alice"}} == conform!(%{name: "alice"}, spec)
+      assert {:b, "foo"} == conform!("foo", spec)
+      assert {:error, errors} = conform(%{name: :alice}, spec)
+      assert errors == [
+        "in: :a/:name val: :alice fails: is_binary()",
+        "in: :b val: %{name: :alice} fails: is_binary()"
+      ]
+    end
+
+    test "can generate data" do
+      spec = alt(a: spec(is_binary()), b: spec(is_integer()))
+      vals =
+        spec
+        |> gen()
+        |> Enum.take(5)
+
+      assert Enum.count(vals) == 5
+      for val <- vals do
+        assert is_binary(val) || is_integer(val)
+      end
+    end
+  end
+
+  describe "cat/1" do
+    @tag :skip
+    test "checks a list of options" do
+      flunk "Not implemented"
     end
   end
 end

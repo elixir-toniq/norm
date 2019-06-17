@@ -6,7 +6,7 @@ defmodule Norm.Conformer do
   def conform(spec, input) do
     # If we get errors then we should convert them to messages. Otherwise
     # we just let good results fall through.
-    with {:error, errors} <- Norm.Conformer.Conformable.conform(spec, [], input) do
+    with {:error, errors} <- Norm.Conformer.Conformable.conform(spec, input, []) do
       {:error, Enum.map(errors, &error_to_msg/1)}
     end
   end

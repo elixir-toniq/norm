@@ -3,65 +3,30 @@ defmodule Norm.Spec do
   # Provides a struct to encapsulate specs
 
   alias __MODULE__
+  alias Norm.Spec.{
+    And,
+    Or,
+  }
 
   defstruct predicate: nil, generator: nil, f: nil
 
-  defimpl Norm.Generatable do
-    def gen(%{generator: gen, predicate: pred}) do
-      case gen do
-        :is_integer ->
-          {:ok, StreamData.integer()}
+  def build({:or, _, [left, right]}) do
+    l = build(left)
+    r = build(right)
 
-        :is_binary ->
-          {:ok, StreamData.binary()}
-
-        _ ->
-          {:error, pred}
-      end
+    quote do
+      %Or{left: unquote(l), right: unquote(r)}
     end
   end
 
-  # def build({:or, _, [left, right]}) do
-  #   l = build(left)
-  #   r = build(right)
+  def build({:and, _, [left, right]}) do
+    l = build(left)
+    r = build(right)
 
-  #   quote do
-  #     %Or{left: unquote(l), right: unquote(r)}
-  #   end
-  # end
-
-  # def build({:and, _, [left, right]}) do
-  #   l = build(left)
-  #   r = build(right)
-
-  #   quote do
-  #     %And{left: unquote(l), right: unquote(r)}
-  #   end
-  # end
-
-  # def build(int) when is_integer(int) do
-  #   quote do
-  #     unquote(int)
-  #   end
-  # end
-
-  # def build({a, b}) do
-  #   IO.inspect([a, b], label: "Two Tuple")
-  #   l = build(a)
-  #   r = build(b)
-
-  #   quote do
-  #     %Tuple{args: [unquote(l), unquote(r)]}
-  #   end
-  # end
-
-  # def build({:{}, _, args}) do
-  #   args = Enum.map(args, &build/1)
-
-  #   quote do
-  #     %Tuple{args: unquote(args)}
-  #   end
-  # end
+    quote do
+      %And{left: unquote(l), right: unquote(r)}
+    end
+  end
 
   # Anonymous functions
   def build(quoted={f, _, _args}) when f in [:&, :fn] do
@@ -91,9 +56,50 @@ defmodule Norm.Spec do
 
   def build(quoted) do
     IO.inspect(quoted, label: "Missed one")
-    raise ArgumentError, "Norm has screwed up"
+    expanded = Macro.expand(quoted, __ENV__)
+    IO.inspect(expanded, label: "Expanded")
+    # raise ArgumentError, "Norm has screwed up"
     quoted
   end
+
+  defimpl Norm.Generatable do
+    def gen(%{generator: gen, predicate: pred}) do
+      case gen do
+        :is_integer ->
+          {:ok, StreamData.integer()}
+
+        :is_binary ->
+          {:ok, StreamData.binary()}
+
+        _ ->
+          {:error, pred}
+      end
+    end
+  end
+
+  # def build(int) when is_integer(int) do
+  #   quote do
+  #     unquote(int)
+  #   end
+  # end
+
+  # def build({a, b}) do
+  #   IO.inspect([a, b], label: "Two Tuple")
+  #   l = build(a)
+  #   r = build(b)
+
+  #   quote do
+  #     %Tuple{args: [unquote(l), unquote(r)]}
+  #   end
+  # end
+
+  # def build({:{}, _, args}) do
+  #   args = Enum.map(args, &build/1)
+
+  #   quote do
+  #     %Tuple{args: unquote(args)}
+  #   end
+  # end
 
   # @doc ~S"""
   # """
@@ -315,7 +321,7 @@ defmodule Norm.Spec do
   #   end
   # end
   defimpl Norm.Conformer.Conformable do
-    def conform(%{f: f, predicate: pred}, path, input) do
+    def conform(%{f: f, predicate: pred}, input, path) do
       case f.(input) do
         true ->
           {:ok, input}
