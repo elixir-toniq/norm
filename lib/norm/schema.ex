@@ -31,9 +31,13 @@ defmodule Norm.Schema do
   defimpl Norm.Conformer.Conformable do
     alias Norm.Conformer.Conformable
 
-    def conform(%{specs: specs, struct: struct}, path, input) when not is_nil(struct) do
+    def conform(_, input, path) when not is_map(input) do
+      {:error, [error(path, input, "not a map")]}
+    end
+
+    def conform(%{specs: specs, struct: struct}, input, path) when not is_nil(struct) do
       if Map.get(input, :__struct__) == struct do
-        check_specs(specs, path, input)
+        check_specs(specs, input, path)
       else
         short_name =
           struct
@@ -44,18 +48,18 @@ defmodule Norm.Schema do
       end
     end
 
-    def conform(%Norm.Schema{specs: specs}, path, input) do
-      check_specs(specs, path, input)
+    def conform(%Norm.Schema{specs: specs}, input, path) do
+      check_specs(specs, input, path)
     end
 
-    defp check_specs(specs, path, input) do
+    defp check_specs(specs, input, path) do
       errors =
         specs
         |> Enum.map(fn {key, spec} ->
           val = Map.get(input, key)
 
           if val do
-            {key, Conformable.conform(spec, path ++ [key], val)}
+            {key, Conformable.conform(spec, val, path ++ [key])}
           else
             {key, {:error, [error(path ++ [key], input, ":required")]}}
           end

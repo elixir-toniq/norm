@@ -78,9 +78,18 @@ defmodule Norm.SchemaTest do
     end
   end
 
-  @tag :skip
   test "schemas can be composed with other specs" do
-    flunk "Not implemented"
+    user_or_other = alt([user: User.s(), other: schema(%OtherUser{})])
+    user = User.chris()
+    other = %OtherUser{}
+
+    assert {:user, user} == conform!(user, user_or_other)
+    assert {:other, other} == conform!(other, user_or_other)
+    assert {:error, errors} = conform(%{}, user_or_other)
+    assert errors == [
+      "in: :user val: %{} fails: Norm.SchemaTest.User",
+      "in: :other val: %{} fails: Norm.SchemaTest.OtherUser"
+    ]
   end
 
   describe "schema/1 with struct" do
@@ -122,5 +131,11 @@ defmodule Norm.SchemaTest do
       assert {:error, errors} = conform(%User{name: 23}, spec)
       assert errors == ["in: :name val: 23 fails: is_binary()"]
     end
+
+    @tag :skip
+    test "can generate proper structs" do
+      flunk "Not Implemented"
+    end
   end
 end
+

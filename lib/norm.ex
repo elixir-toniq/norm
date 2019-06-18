@@ -6,6 +6,9 @@ defmodule Norm do
   alias Norm.Conformer
   alias Norm.Generatable
   alias Norm.Spec
+  alias Norm.Spec.{
+    Alt,
+  }
   alias Norm.Schema
 
   defmodule MismatchError do
@@ -31,6 +34,19 @@ defmodule Norm do
 
   @doc ~S"""
   Verifies that the payload conforms to the specification
+
+  ## Examples:
+
+  iex> conform(42, spec(is_integer()))
+  {:ok, 42}
+  iex> conform(42, spec(fn x -> x == 42 end))
+  {:ok, 42}
+  iex> conform(42, spec(&(&1 >= 0)))
+  {:ok, 42}
+  iex> conform(42, spec(&(&1 >= 100)))
+  {:error, ["val: 42 fails: &(&1 >= 100)"]}
+  iex> conform("foo", spec(is_integer()))
+  {:error, ["val: \"foo\" fails: is_integer()"]}
   """
   def conform(input, spec) do
     Conformer.conform(spec, input)
@@ -80,10 +96,24 @@ defmodule Norm do
   end
 
   @doc ~S"""
-  Creates a re-usable schema
+  Creates a new spec. Specs can be created from any existing predicates or
+  anonymous functions. Specs must return a boolean value.
 
-  iex> conform!(%{name: "Chris"}, schema(%{name: spec(is_binary())}))
-  %{name: "Chris"}
+  Predicates can be arbitrarily composed using the `and` and `or` keywords.
+
+  ## Examples:
+  iex> conform!(21, spec(is_integer()))
+  21
+  iex> conform!(21, spec(is_integer() and &(&1 >= 21)))
+  21
+  iex> conform("21", spec(is_integer() and &(&1 >= 21)))
+  {:error, ["val: \"21\" fails: is_integer()"]}
+  iex> conform!(:foo, spec(is_atom() or is_binary()))
+  :foo
+  iex> conform!("foo", spec(is_atom() or is_binary()))
+  "foo"
+  iex> conform(21, spec(is_atom() or is_binary()))
+  {:error, ["val: 21 fails: is_atom()", "val: 21 fails: is_binary()"]}
   """
   defmacro spec(predicate) do
     spec = Spec.build(predicate)
@@ -98,6 +128,25 @@ defmodule Norm do
   """
   def schema(input) do
     Schema.build(input)
+  end
+
+  @doc ~S"""
+  Choices between alternative predicates or patterns. The patterns must be tagged with an atom.
+  When conforming data to this specification the data is returned as a tuple with the tag.
+
+  iex> conform!("foo", alt(s: spec(is_binary()), a: spec(is_atom())))
+  {:s, "foo"}
+  iex> conform!(:foo, alt(s: spec(is_binary()), a: spec(is_atom())))
+  {:a, :foo}
+  iex> conform!(123, alt(num: spec(is_integer()), str: spec(is_binary())))
+  {:num, 123}
+  iex> conform!("foo", alt(num: spec(is_integer()), str: spec(is_binary())))
+  {:str, "foo"}
+  iex> conform(true, alt(num: spec(is_integer()), str: spec(is_binary())))
+  {:error, ["in: :num val: true fails: is_integer()", "in: :str val: true fails: is_binary()"]}
+  """
+  def alt(specs) when is_list(specs) do
+    %Alt{specs: specs}
   end
 
   # @doc ~S"""
@@ -138,40 +187,6 @@ defmodule Norm do
   #       {:error, errors}
   #     else
   #       {:ok, Enum.map(results, fn {tag, {_, data}} -> {tag, data} end)}
-  #     end
-  #   end
-  # end
-
-  # @doc ~S"""
-  # Choices between alternative predicates or patterns. The patterns must be tagged with an atom.
-  # When conforming data to this specification the data is returned as a tuple with the tag.
-
-  # iex> conform!(123, alt(num: integer?(), str: string?()))
-  # {:num, 123}
-  # iex> conform!("foo", alt(num: integer?(), str: string?()))
-  # {:str, "foo"}
-  # iex> conform(true, alt(num: integer?(), str: string?()))
-  # {:error, ["in: :num val: true fails: integer?()", "in: :str val: true fails: string?()"]}
-  # """
-  # def alt(opts) do
-  #   fn path, input ->
-  #     results =
-  #       opts
-  #       |> Enum.map(fn {tag, spec} -> {tag, spec.(path ++ [tag], input)} end)
-
-  #     good_result =
-  #       results
-  #       |> Enum.find(fn {_, {result, _}} -> result == :ok end)
-
-  #     if good_result do
-  #       {tag, {:ok, data}} = good_result
-  #       {:ok, {tag, data}}
-  #     else
-  #       errors =
-  #         results
-  #         |> Enum.flat_map(fn {_, {_, errors}} -> errors end)
-
-  #       {:error, errors}
   #     end
   #   end
   # end
