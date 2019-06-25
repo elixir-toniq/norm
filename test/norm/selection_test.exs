@@ -55,9 +55,66 @@ defmodule Norm.SelectionTest do
     end
   end
 
-  @tag :skip
-  test "can generate values" do
-    flunk "Not Implemented"
+  describe "generation" do
+    test "can generate values" do
+      s = schema(%{
+        name: spec(is_binary()),
+        age: spec(is_integer())
+      })
+      select = selection(s, [:name, :age])
+
+      maps =
+        select
+        |> gen()
+        |> Enum.take(10)
+
+      for map <- maps do
+        assert is_map(map)
+        assert match?(%{name: _, age: _}, map)
+        assert is_binary(map.name)
+        assert is_integer(map.age)
+      end
+    end
+
+    test "can generate subsets" do
+      s = schema(%{
+        name: spec(is_binary()),
+        age: spec(is_integer())
+      })
+      select = selection(s, [:age])
+
+      maps =
+        select
+        |> gen()
+        |> Enum.take(10)
+
+      for map <- maps do
+        assert is_map(map)
+        assert match?(%{age: _}, map)
+        assert is_integer(map.age)
+      end
+    end
+
+    test "can generate inner schemas" do
+      s = schema(%{
+        user: schema(%{
+          name: spec(is_binary()),
+          age: spec(is_integer())
+        })
+      })
+      select = selection(s, [user: [:age]])
+
+      maps =
+        select
+        |> gen()
+        |> Enum.take(10)
+
+      for map <- maps do
+        assert is_map(map)
+        assert match?(%{user: %{age: _}}, map)
+        assert is_integer(map.user.age)
+      end
+    end
   end
 end
 

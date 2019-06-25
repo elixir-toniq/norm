@@ -36,6 +36,31 @@ defmodule Norm.Spec.Selection do
     end
   end
 
+  defimpl Norm.Generatable do
+    alias Norm.Generatable
+
+    def gen(%{subset: specs}) do
+      case Enum.reduce(specs, %{}, &to_gen/2) do
+        {:error, error} ->
+          {:error, error}
+
+        gen ->
+          {:ok, StreamData.fixed_map(gen)}
+      end
+    end
+
+    defp to_gen(_, {:error, error}), do: {:error, error}
+    defp to_gen({key, spec}, generator) do
+      case Generatable.gen(spec) do
+        {:ok, g} ->
+          Map.put(generator, key, g)
+
+        {:error, error} ->
+          {:error, error}
+      end
+    end
+  end
+
   defimpl Norm.Conformer.Conformable do
     alias Norm.Conformer.Conformable
 
