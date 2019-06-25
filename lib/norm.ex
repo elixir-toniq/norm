@@ -8,29 +8,11 @@ defmodule Norm do
   alias Norm.Spec
   alias Norm.Spec.{
     Alt,
+    Selection,
   }
   alias Norm.Schema
-
-  defmodule MismatchError do
-    defexception [:message]
-
-    def exception(errors) do
-      msg =
-        errors
-        |> Enum.join("\n")
-
-      %__MODULE__{message: msg}
-    end
-  end
-
-  defmodule GeneratorError do
-    defexception [:message]
-
-    def exception(predicate) do
-      msg = "Unable to create a generator for: #{predicate}"
-      %__MODULE__{message: msg}
-    end
-  end
+  alias Norm.MismatchError
+  alias Norm.GeneratorError
 
   @doc ~S"""
   Verifies that the payload conforms to the specification
@@ -134,6 +116,8 @@ defmodule Norm do
   Choices between alternative predicates or patterns. The patterns must be tagged with an atom.
   When conforming data to this specification the data is returned as a tuple with the tag.
 
+  ## Examples
+
   iex> conform!("foo", alt(s: spec(is_binary()), a: spec(is_atom())))
   {:s, "foo"}
   iex> conform!(:foo, alt(s: spec(is_binary()), a: spec(is_atom())))
@@ -147,6 +131,18 @@ defmodule Norm do
   """
   def alt(specs) when is_list(specs) do
     %Alt{specs: specs}
+  end
+
+  @doc ~S"""
+  Specifies a selection of keys from a schema. This allows callsites to
+  define what keys must be available from the input.
+  """
+  def selection(%Schema{}=schema) do
+    Selection.new(schema, :all)
+  end
+
+  def selection(%Schema{}=schema, path) do
+    Selection.new(schema, path)
   end
 
   # @doc ~S"""

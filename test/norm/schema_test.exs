@@ -92,6 +92,34 @@ defmodule Norm.SchemaTest do
     ]
   end
 
+  test "breaks if the input has more keys then we've specified" do
+    user_schema = schema(%{
+      name: spec(is_binary())
+    })
+
+    assert {:error, errors} = conform(%{name: "chris", age: 31}, user_schema)
+    assert errors == ["in: :age val: %{age: 31, name: \"chris\"} fails: :unexpected"]
+  end
+
+  test "works with string keys and atom keys" do
+    user = schema(%{
+      "name" => spec(is_binary()),
+      age: spec(is_integer())
+    })
+
+    input = %{
+      "name" => "chris",
+      age: 31
+    }
+
+    assert input == conform!(input, user)
+    assert {:error, errors} = conform(%{"name" => 31, age: "chris"}, user)
+    assert errors == [
+      "in: :age val: \"chris\" fails: is_integer()",
+      "in: \"name\" val: 31 fails: is_binary()"
+    ]
+  end
+
   describe "schema/1 with struct" do
     test "fails non-structs when the schema is a struct" do
       input = Map.from_struct(User.chris())

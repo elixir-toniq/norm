@@ -15,7 +15,6 @@ defmodule Norm.Schema do
       struct
       |> Map.from_struct
       |> Enum.to_list()
-      |> Enum.filter(fn {_key, spec} -> match?(%Spec{}, spec) end)
 
     %Schema{specs: specs, struct: name}
   end
@@ -26,6 +25,13 @@ defmodule Norm.Schema do
       |> Enum.to_list()
 
     %Schema{specs: specs}
+  end
+
+  def spec(schema, key) do
+    schema.specs
+    |> Enum.filter(fn {name, _} -> name == key end)
+    |> Enum.map(fn {_, spec} -> spec end)
+    |> Enum.at(0)
   end
 
   defimpl Norm.Conformer.Conformable do
@@ -53,24 +59,50 @@ defmodule Norm.Schema do
     end
 
     defp check_specs(specs, input, path) do
+      expected_keys =
+        specs
+        |> Enum.map(fn {key, _} -> key end)
+
+      actual_keys =
+        input
+        |> Map.keys
+        |> Enum.reject(& &1 == :__struct__)
+
+      unexpected_key_errors =
+        (actual_keys -- expected_keys)
+        |> Enum.map(fn key -> error(path ++ [key], input, ":unexpected") end)
+
       errors =
         specs
-        |> Enum.map(fn {key, spec} ->
-          val = Map.get(input, key)
-
-          if val do
-            {key, Conformable.conform(spec, val, path ++ [key])}
-          else
-            {key, {:error, [error(path ++ [key], input, ":required")]}}
-          end
-        end)
+        |> Enum.map(& check_spec(&1, input, path))
         |> Enum.filter(fn {_, {result, _}} -> result == :error end)
         |> Enum.flat_map(fn {_, {_, errors}} -> errors end)
+
+      errors = errors ++ unexpected_key_errors
 
       if Enum.any?(errors) do
         {:error, errors}
       else
         {:ok, input}
+      end
+    end
+
+    defp check_spec({key, nil}, input, path) do
+      case Map.has_key?(input, key) do
+        false ->
+          {key, {:error, [error(path ++ [key], input, ":required")]}}
+
+        true ->
+          {key, {:ok, Map.get(input, key)}}
+      end
+    end
+    defp check_spec({key, spec}, input, path) do
+      val = Map.get(input, key)
+
+      if val do
+        {key, Conformable.conform(spec, val, path ++ [key])}
+      else
+        {key, {:error, [error(path ++ [key], input, ":required")]}}
       end
     end
 
