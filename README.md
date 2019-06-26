@@ -69,7 +69,7 @@ use anonymous functions to create specs.
 ```elixir
 spec(is_binary())
 spec(is_integer() and &(&1 > 0))
-spec(is_binary() and fn str -> !String.empty?(str) end)
+spec(is_binary() and fn str -> String.length(str) > 0 end)
 ```
 
 The data is always passed as the first argument to your predicate so you
@@ -84,7 +84,7 @@ conform!(3, spec(greater?(5)))
     (norm) lib/norm.ex:44: Norm.conform!/2
 ```
 
-### Schemas 
+### Schemas
 
 Norm provides a `schema/1` function for specifying maps and structs:
 
@@ -253,7 +253,38 @@ PRs are very welcome ;).
 
 ### Guiding generators
 
-TODO
+You may have specs like `spec(fn x -> rem(x, 2) == 0 end)` which check to
+see that an integer is even or not. This generator expects integer values
+but there's no way for Norm to determine this. If you try to create
+a generator from this spec you'll get an error:
+
+```elixir
+gen(spec(fn x -> rem(x, 2) == 0 end))
+** (Norm.GeneratorError) Unable to create a generator for: fn x -> rem(x, 2) == 0 end
+    (norm) lib/norm.ex:76: Norm.gen/1
+```
+
+You can guide Norm to the right generator by specifying a guard clause as
+the first predicate in a spec. If Norm can find the right generator then
+it will use any other predicates as filters in the generator.
+
+```elixir
+Enum.take(gen(spec(is_integer() and fn x -> rem(x, 2) == 0 end)), 5)
+[0, -2, 2, 0, 4]
+```
+
+But its also possible to create filters that are too specific such as
+this:
+
+```elixir
+gen(spec(is_binary() and &(&1 =~ ~r/foobarbaz/)))
+```
+
+Norm can determine the generators to use however its incredibly unlikely
+that Norm will be able to generate data that matches the filter. After 25
+consequtive unseccesful attempts to generate a good value Norm (StreamData
+under the hood) will return an error. In these scenarios we can create
+a custom generator.
 
 ### Overriding generators
 
@@ -271,7 +302,6 @@ Norm is being actively worked on. Any contributions are very welcome. Here is a
 limited set of ideas that are coming soon.
 
 - [ ] Overwrite basic generators
-- [ ] Generators should support additional filters.
 - [ ] Support generators for other primitive types (atoms, floats, etc.)
 - [ ] Specify shapes of common elixir primitives (tuples and atoms). This
   will allow us to match on the common `{:ok, term()} | {:error, term()}`

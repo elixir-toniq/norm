@@ -71,6 +71,9 @@ defmodule Norm.Spec do
         :is_binary ->
           {:ok, StreamData.binary()}
 
+        :is_atom ->
+          {:ok, StreamData.atom(:alphanumeric)}
+
         _ ->
           {:error, pred}
       end
