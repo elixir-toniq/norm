@@ -45,6 +45,16 @@ defmodule NormTest do
     end
   end
 
+  describe "with_gen" do
+    test "overrides the default generator" do
+      spec = with_gen(spec(is_integer()), gen(spec(is_binary())))
+      for str <- Enum.take(gen(spec), 5), do: assert is_binary(str)
+
+      spec = with_gen(schema(%{foo: spec(is_integer())}), StreamData.constant("foo"))
+      for str <- Enum.take(gen(spec), 5), do: assert str == "foo"
+    end
+  end
+
   describe "schema/1" do
     test "creates a re-usable schema" do
       s = schema(%{name: spec(is_binary())})

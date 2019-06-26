@@ -55,7 +55,7 @@ Norm validates data by "conforming" the value to a specification. If the
 values don't conform then a list of errors is returned. There are
 2 functions provided for this `conform/2` and `conform!/2`. If you need to
 return a list of well defined errors then you should use `coform/2`.
-Otherwise `conform!/2` is more generally more useful. The input data is
+Otherwise `conform!/2` is generally more useful. The input data is
 always passed as the 1st argument to `conform` so that calls to conform
 are easily chainable.
 
@@ -288,7 +288,32 @@ a custom generator.
 
 ### Overriding generators
 
-TODO
+You'll often need to guide your generators into the interesting parts of the
+state space so that you can easily find bugs. That means you'll want to tweak
+and control your generators. Norm provides an escape hatch for creating your
+own generators with the `with_gen/2` function:
+
+```elixir
+age = spec(is_integer() and &(&1 >= 0))
+reasonable_ages = with_gen(age, StreamData.integer(0..105))
+```
+
+Because `gen/1` returns a StreamData generator you can compose your generators
+with other StreamData functions:
+
+```elixir
+age = spec(is_integer() and &(&1 >= 0))
+StreamData.frequencies([
+  {3, gen(age)},
+  {1, StreamData.binary()},
+])
+
+gen(age) |> StreamData.map(&Integer.to_string/1) |> Enum.take(5)
+["1", "1", "3", "4", "1"]
+```
+
+This allows you to compose generators however you need to while keeping your
+generation co-located with the specification of the data.
 
 ## Should I use this?
 
@@ -301,14 +326,11 @@ working to make improvements.
 Norm is being actively worked on. Any contributions are very welcome. Here is a
 limited set of ideas that are coming soon.
 
-- [ ] Overwrite basic generators
-- [ ] Support generators for other primitive types (atoms, floats, etc.)
+- [ ] Support generators for other primitive types (floats, etc.)
 - [ ] Specify shapes of common elixir primitives (tuples and atoms). This
   will allow us to match on the common `{:ok, term()} | {:error, term()}`
   pattern in elixir.
-- [ ] selections shouldn't need a path if you just want to match the
+- [ ] selections shouldn't need a path if you just want to match all the keys in the schema
 - [ ] Support "sets" of literal values
-- [ ] support a mechanism for overriding generators
 - [ ] specs for functions and anonymous functions
 - [ ] easier way to do dispatch based on schema keys
-  specifed keys.

@@ -5,6 +5,7 @@ defmodule Norm do
 
   alias Norm.Conformer
   alias Norm.Generatable
+  alias Norm.Generator
   alias Norm.Spec
   alias Norm.Spec.{
     Alt,
@@ -75,6 +76,20 @@ defmodule Norm do
       {:ok, generator} -> generator
       {:error, error} -> raise GeneratorError, error
     end
+  end
+
+  @doc """
+  Overwrites the default generator with a custom generator. The generator
+  can be any valid StreamData generator. This means you can either use Norms
+  built in `gen/1` function or you can drop into StreamData directly.
+
+  ## Examples
+
+      iex> Enum.take(gen(with_gen(spec(is_integer()), StreamData.constant("hello world"))), 3)
+      ["hello world", "hello world", "hello world"]
+  """
+  def with_gen(spec, %StreamData{}=generator) do
+    Generator.new(spec, generator)
   end
 
   @doc ~S"""
