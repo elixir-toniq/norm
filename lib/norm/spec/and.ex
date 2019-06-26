@@ -20,5 +20,15 @@ defmodule Norm.Spec.And do
       end
     end
   end
+
+  defimpl Norm.Generatable do
+    alias Norm.Generatable
+
+    def gen(%{left: l, right: r}) do
+      with {:ok, gen} <- Generatable.gen(l) do
+        {:ok, StreamData.filter(gen, r.f)}
+      end
+    end
+  end
 end
 
