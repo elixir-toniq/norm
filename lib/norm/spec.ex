@@ -54,12 +54,22 @@ defmodule Norm.Spec do
     end
   end
 
+  # Remote call
+  def build({{:., _, _}, _, _}=quoted) do
+    predicate = Macro.to_string(quoted)
+
+    quote do
+      run = fn input ->
+        input |> unquote(quoted)
+      end
+
+      %Spec{predicate: unquote(predicate), f: run, generator: :none}
+    end
+  end
+
   def build(quoted) do
     IO.inspect(quoted, label: "Missed one")
-    expanded = Macro.expand(quoted, __ENV__)
-    IO.inspect(expanded, label: "Expanded")
-    # raise ArgumentError, "Norm has screwed up"
-    quoted
+    raise ArgumentError, "Norm can't build a spec from: #{Macro.to_string(quoted)}"
   end
 
   defimpl Norm.Generatable do

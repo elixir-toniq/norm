@@ -3,7 +3,6 @@ defmodule Norm.Schema do
   # Provides the definition for schemas
 
   alias __MODULE__
-  alias Norm.Spec
 
   defstruct specs: [], struct: nil
 
