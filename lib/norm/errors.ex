@@ -23,7 +23,6 @@ defmodule Norm.SpecError do
   defexception [:message]
   alias Norm.Spec
   alias Norm.Schema
-  alias Norm.Selection
 
   def exception(details) do
     %__MODULE__{message: msg(details)}
@@ -50,7 +49,7 @@ defmodule Norm.SpecError do
       |> Enum.map(&pad(&1, (i+1)*2))
       |> Enum.join("\n")
 
-    items = "%{\n" <> specs <> "\n" <> pad("}", i*2)
+    "%{\n" <> specs <> "\n" <> pad("}", i*2)
   end
 
   defp pad(str, 0), do: str
