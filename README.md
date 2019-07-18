@@ -54,7 +54,7 @@ end
 Norm validates data by "conforming" the value to a specification. If the
 values don't conform then a list of errors is returned. There are
 2 functions provided for this `conform/2` and `conform!/2`. If you need to
-return a list of well defined errors then you should use `coform/2`.
+return a list of well defined errors then you should use `conform/2`.
 Otherwise `conform!/2` is generally more useful. The input data is
 always passed as the 1st argument to `conform` so that calls to conform
 are easily chainable.
