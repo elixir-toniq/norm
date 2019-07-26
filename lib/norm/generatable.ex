@@ -1,7 +1,6 @@
 defprotocol Norm.Generatable do
-  @moduledoc """
-  Defines generatable types
-  """
+  @moduledoc false
+  # Defines generatable types
 
   def gen(able)
 end

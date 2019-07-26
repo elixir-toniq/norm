@@ -26,7 +26,7 @@ defmodule Norm.MixProject do
   defp deps do
     [
       {:stream_data, "~> 0.4.3", optional: true, only: [:dev, :test]},
-      {:ex_doc, "~> 0.19", only: [:dev, :test]},
+      {:ex_doc, "~> 0.19", only: [:dev, :test]}
     ]
   end
 

@@ -38,10 +38,10 @@ defmodule Norm.Conformer do
 
 
   defprotocol Conformable do
-    @moduledoc """
-    Defines a conformable type. Must take the type, current path, and input and
-    return an success tuple with the conformed data or a list of errors.
-    """
+    @moduledoc false
+    # Defines a conformable type. Must take the type, current path, and input and
+    # return an success tuple with the conformed data or a list of errors.
+
     def conform(spec, path, input)
   end
 end
