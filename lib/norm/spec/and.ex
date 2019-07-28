@@ -21,12 +21,14 @@ defmodule Norm.Spec.And do
     end
   end
 
-  defimpl Norm.Generatable do
-    alias Norm.Generatable
+  if Code.ensure_loaded?(StreamData) do
+    defimpl Norm.Generatable do
+      alias Norm.Generatable
 
-    def gen(%{left: l, right: r}) do
-      with {:ok, gen} <- Generatable.gen(l) do
-        {:ok, StreamData.filter(gen, r.f)}
+      def gen(%{left: l, right: r}) do
+        with {:ok, gen} <- Generatable.gen(l) do
+          {:ok, StreamData.filter(gen, r.f)}
+        end
       end
     end
   end

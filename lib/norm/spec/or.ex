@@ -23,13 +23,15 @@ defmodule Norm.Spec.Or do
     end
   end
 
-  defimpl Norm.Generatable do
-    alias Norm.Generatable
+  if Code.ensure_loaded?(StreamData) do
+    defimpl Norm.Generatable do
+      alias Norm.Generatable
 
-    def gen(%{left: l, right: r}) do
-      with {:ok, l} <- Generatable.gen(l),
-           {:ok, r} <- Generatable.gen(r) do
-        {:ok, StreamData.one_of([l, r])}
+      def gen(%{left: l, right: r}) do
+        with {:ok, l} <- Generatable.gen(l),
+             {:ok, r} <- Generatable.gen(r) do
+          {:ok, StreamData.one_of([l, r])}
+        end
       end
     end
   end

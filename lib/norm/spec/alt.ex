@@ -6,26 +6,6 @@ defmodule Norm.Spec.Alt do
   defimpl Norm.Conformer.Conformable do
     alias Norm.Conformer.Conformable
 
-  #   fn path, input ->
-  #     results =
-  #       opts
-  #       |> Enum.map(fn {tag, spec} -> {tag, spec.(path ++ [tag], input)} end)
-
-  #     good_result =
-  #       results
-  #       |> Enum.find(fn {_, {result, _}} -> result == :ok end)
-
-  #     if good_result do
-  #       {tag, {:ok, data}} = good_result
-  #       {:ok, {tag, data}}
-  #     else
-  #       errors =
-  #         results
-  #         |> Enum.flat_map(fn {_, {_, errors}} -> errors end)
-
-  #       {:error, errors}
-  #     end
-  #   end
     def conform(%{specs: specs}, input, path) do
       result =
         specs
@@ -50,25 +30,27 @@ defmodule Norm.Spec.Alt do
     end
   end
 
-  defimpl Norm.Generatable do
-    def gen(%{specs: specs}) do
-      case Enum.reduce(specs, [], &to_gen/2) do
-        {:error, error} ->
-          {:error, error}
+  if Code.ensure_loaded?(StreamData) do
+    defimpl Norm.Generatable do
+      def gen(%{specs: specs}) do
+        case Enum.reduce(specs, [], &to_gen/2) do
+          {:error, error} ->
+            {:error, error}
 
-        generators ->
-          {:ok, StreamData.one_of(generators)}
+          generators ->
+            {:ok, StreamData.one_of(generators)}
+        end
       end
-    end
 
-    def to_gen(_, {:error, error}), do: {:error, error}
-    def to_gen({_key, spec}, generators) do
-      case Norm.Generatable.gen(spec) do
-        {:ok, g} ->
-          [g | generators]
+      def to_gen(_, {:error, error}), do: {:error, error}
+      def to_gen({_key, spec}, generators) do
+        case Norm.Generatable.gen(spec) do
+          {:ok, g} ->
+            [g | generators]
 
-        {:error, error} ->
-          {:error, error}
+          {:error, error} ->
+            {:error, error}
+        end
       end
     end
   end
