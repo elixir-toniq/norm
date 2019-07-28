@@ -72,20 +72,22 @@ defmodule Norm.Spec do
     raise ArgumentError, "Norm can't build a spec from: #{Macro.to_string(quoted)}"
   end
 
-  defimpl Norm.Generatable do
-    def gen(%{generator: gen, predicate: pred}) do
-      case gen do
-        :is_integer ->
-          {:ok, StreamData.integer()}
+  if Code.ensure_loaded?(StreamData) do
+    defimpl Norm.Generatable do
+      def gen(%{generator: gen, predicate: pred}) do
+        case gen do
+          :is_integer ->
+            {:ok, StreamData.integer()}
 
-        :is_binary ->
-          {:ok, StreamData.binary()}
+          :is_binary ->
+            {:ok, StreamData.binary()}
 
-        :is_atom ->
-          {:ok, StreamData.atom(:alphanumeric)}
+          :is_atom ->
+            {:ok, StreamData.atom(:alphanumeric)}
 
-        _ ->
-          {:error, pred}
+          _ ->
+            {:error, pred}
+        end
       end
     end
   end

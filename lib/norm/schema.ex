@@ -110,27 +110,29 @@ defmodule Norm.Schema do
     end
   end
 
-  defimpl Norm.Generatable do
-    alias Norm.Generatable
+  if Code.ensure_loaded?(StreamData) do
+    defimpl Norm.Generatable do
+      alias Norm.Generatable
 
-    def gen(%{specs: specs}) do
-      case Enum.reduce(specs, %{}, &to_gen/2) do
-        {:error, error} ->
-          {:error, error}
+      def gen(%{specs: specs}) do
+        case Enum.reduce(specs, %{}, &to_gen/2) do
+          {:error, error} ->
+            {:error, error}
 
-        generator ->
-          {:ok, StreamData.fixed_map(generator)}
+          generator ->
+            {:ok, StreamData.fixed_map(generator)}
+        end
       end
-    end
 
-    def to_gen(_, {:error, error}), do: {:error, error}
-    def to_gen({key, spec}, generator) do
-      case Generatable.gen(spec) do
-        {:ok, g} ->
-          Map.put(generator, key, g)
+      def to_gen(_, {:error, error}), do: {:error, error}
+      def to_gen({key, spec}, generator) do
+        case Generatable.gen(spec) do
+          {:ok, g} ->
+            Map.put(generator, key, g)
 
-        {:error, error} ->
-          {:error, error}
+          {:error, error} ->
+            {:error, error}
+        end
       end
     end
   end

@@ -381,9 +381,13 @@ defmodule Norm do
       ** (Norm.GeneratorError) Unable to create a generator for: &(&1 > 0)
   """
   def gen(spec) do
-    case Generatable.gen(spec) do
-      {:ok, generator} -> generator
-      {:error, error} -> raise GeneratorError, error
+    if Code.ensure_loaded?(StreamData) do
+      case Generatable.gen(spec) do
+        {:ok, generator} -> generator
+        {:error, error} -> raise GeneratorError, error
+      end
+    else
+      raise Norm.GeneratorLibraryError
     end
   end
 
@@ -397,8 +401,14 @@ defmodule Norm do
       iex> Enum.take(gen(with_gen(spec(is_integer()), StreamData.constant("hello world"))), 3)
       ["hello world", "hello world", "hello world"]
   """
-  def with_gen(spec, %StreamData{}=generator) do
-    Generator.new(spec, generator)
+  if Code.ensure_loaded?(StreamData) do
+    def with_gen(spec, %StreamData{}=generator) do
+      Generator.new(spec, generator)
+    end
+  else
+    def with_gen(_spec, _) do
+      raise Norm.GeneratorLibraryError
+    end
   end
 
   @doc ~S"""

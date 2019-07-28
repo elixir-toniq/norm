@@ -36,27 +36,29 @@ defmodule Norm.Spec.Selection do
     end
   end
 
-  defimpl Norm.Generatable do
-    alias Norm.Generatable
+  if Code.ensure_loaded?(StreamData) do
+    defimpl Norm.Generatable do
+      alias Norm.Generatable
 
-    def gen(%{subset: specs}) do
-      case Enum.reduce(specs, %{}, &to_gen/2) do
-        {:error, error} ->
-          {:error, error}
+      def gen(%{subset: specs}) do
+        case Enum.reduce(specs, %{}, &to_gen/2) do
+          {:error, error} ->
+            {:error, error}
 
-        gen ->
-          {:ok, StreamData.fixed_map(gen)}
+          gen ->
+            {:ok, StreamData.fixed_map(gen)}
+        end
       end
-    end
 
-    defp to_gen(_, {:error, error}), do: {:error, error}
-    defp to_gen({key, spec}, generator) do
-      case Generatable.gen(spec) do
-        {:ok, g} ->
-          Map.put(generator, key, g)
+      defp to_gen(_, {:error, error}), do: {:error, error}
+      defp to_gen({key, spec}, generator) do
+        case Generatable.gen(spec) do
+          {:ok, g} ->
+            Map.put(generator, key, g)
 
-        {:error, error} ->
-          {:error, error}
+          {:error, error} ->
+            {:error, error}
+        end
       end
     end
   end

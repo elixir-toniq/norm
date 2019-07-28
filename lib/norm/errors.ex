@@ -10,6 +10,16 @@ defmodule Norm.MismatchError do
   end
 end
 
+defmodule Norm.GeneratorLibraryError do
+  defexception [:message]
+
+  def exception(_) do
+    %__MODULE__{
+      message: "In order to use generators please include `stream_data` as a dependency"
+    }
+  end
+end
+
 defmodule Norm.GeneratorError do
   defexception [:message]
 
