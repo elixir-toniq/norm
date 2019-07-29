@@ -8,7 +8,7 @@ validations.
 ```elixir
 import Norm
 
-conform!(123, spec(is_integer() and &(& > 0)))
+conform!(123, spec(is_integer() and &(&1 > 0)))
 => 123
 
 conform!(-50, spec(is_integer() and &(&1 > 0)))
