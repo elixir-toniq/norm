@@ -40,12 +40,15 @@ defmodule Norm.Schema do
       {:error, [error(path, input, "not a map")]}
     end
 
-    def conform(%{specs: specs, struct: struct}, input, path) when not is_nil(struct) do
-      if Map.get(input, :__struct__) == struct do
-        check_specs(specs, input, path)
+    def conform(%{specs: specs, struct: target}, input, path) when not is_nil(target) do
+      # Ensure we're mapping the correct struct
+      if Map.get(input, :__struct__) == target do
+        with {:ok, conformed} <- check_specs(specs, input, path) do
+          {:ok, struct(target, conformed)}
+        end
       else
         short_name =
-          struct
+          target
           |> Atom.to_string
           |> String.replace("Elixir.", "")
 
@@ -71,18 +74,22 @@ defmodule Norm.Schema do
         (actual_keys -- expected_keys)
         |> Enum.map(fn key -> error(path ++ [key], input, ":unexpected") end)
 
-      errors =
+      results =
         specs
         |> Enum.map(& check_spec(&1, input, path))
-        |> Enum.filter(fn {_, {result, _}} -> result == :error end)
-        |> Enum.flat_map(fn {_, {_, errors}} -> errors end)
+        |> Enum.reduce(%{ok: [], error: []}, fn {key, {result, conformed}}, acc ->
+          Map.put(acc, result, acc[result] ++ [{key, conformed}])
+        end)
 
-      errors = errors ++ unexpected_key_errors
+      errors =
+        results.error
+        |> Enum.flat_map(fn {_, error} -> error end)
+        |> Enum.concat(unexpected_key_errors)
 
       if Enum.any?(errors) do
         {:error, errors}
       else
-        {:ok, input}
+        {:ok, Enum.into(results.ok, %{})}
       end
     end
 

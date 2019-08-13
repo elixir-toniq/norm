@@ -450,7 +450,7 @@ defmodule Norm do
       ...> )
       %{age: 31, name: "chris"}
   """
-  def schema(input) do
+  def schema(input) when is_map(input) do
     Schema.build(input)
   end
 

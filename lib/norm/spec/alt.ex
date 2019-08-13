@@ -10,7 +10,7 @@ defmodule Norm.Spec.Alt do
       result =
         specs
         |> Enum.map(fn {name, spec} ->
-          case Conformable.conform(spec, input, [name | path]) do
+          case Conformable.conform(spec, input, path ++ [name]) do
             {:ok, i} ->
               {:ok, {name, i}}
 
