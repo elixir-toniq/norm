@@ -2,9 +2,7 @@ defmodule Norm.MismatchError do
   defexception [:message]
 
   def exception(errors) do
-    msg =
-      errors
-      |> Enum.join("\n")
+    msg = Enum.join(errors, "\n")
 
     %__MODULE__{message: msg}
   end

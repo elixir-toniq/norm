@@ -11,13 +11,12 @@ defmodule Norm.Conformer do
     end
   end
 
-  def error_to_msg(%{path: path, input: input, msg: msg, at: at}) do
+  def error_to_msg(%{path: path, input: input, msg: msg}) do
     path  = if path == [], do: nil, else: "in: " <> build_path(path)
-    at    = if at == nil, do: nil, else: "at: :#{at}"
     val   = "val: #{format_val(input)}"
     fails = "fails: #{msg}"
 
-    [path, at, val, fails]
+    [val, fails, path]
     |> Enum.reject(&is_nil/1)
     |> Enum.join(" ")
   end

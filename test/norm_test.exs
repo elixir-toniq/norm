@@ -3,45 +3,13 @@ defmodule NormTest do
   doctest Norm, import: true
   import Norm
 
-  describe "conform/2" do
-    test "returns the correct data or exceptions" do
-      # iex> conform(:atom, sand(string?(), lit("foo")))
-      # {:error, ["val: :atom fails: string?()", "val: :atom fails: \"foo\""]}
-      # iex> conform(:atom, sor(string?(), integer?()))
-      # {:error, ["val: :atom fails: string?()", "val: :atom fails: integer?()"]}
-  # iex> conform(:atom, lit("string"))
-  # {:error, ["val: :atom fails: \"string\""]}
-  # iex> conform(1, string?())
-  # {:error, ["val: 1 fails: string?()"]}
-    end
-  end
-
-  describe "conform!" do
-    test "returns data or throws exception" do
-  # iex> conform!("foo", sand(string?(), lit("foo")))
-  # "foo"
-  # iex> conform!("foo", sor(string?(), integer?()))
-  # "foo"
-  # iex> conform!(1, sor(string?(), integer?()))
-  # 1
-  # iex> conform!(1, lit(1))
-  # 1
-  # iex> conform!("string", lit("string"))
-  # "string"
-  # iex> conform!(:atom, lit(:atom))
-  # :atom
-  # iex> conform!("foo", string?())
-  # "foo"
-    end
-  end
-
   describe "gen" do
+    @tag :skip
     test "uses the generator created by spec" do
-
     end
 
+    @tag :skip
     test "returns an error if the generator can not be found" do
-
     end
   end
 
@@ -87,8 +55,8 @@ defmodule NormTest do
       assert {:b, "foo"} == conform!("foo", spec)
       assert {:error, errors} = conform(%{name: :alice}, spec)
       assert errors == [
-        "in: :a/:name val: :alice fails: is_binary()",
-        "in: :b val: %{name: :alice} fails: is_binary()"
+        "val: :alice fails: is_binary() in: :a/:name",
+        "val: %{name: :alice} fails: is_binary() in: :b"
       ]
     end
 
