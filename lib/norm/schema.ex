@@ -98,10 +98,10 @@ defmodule Norm.Schema do
     defp check_spec({key, spec}, input, path) do
       val = Map.get(input, key)
 
-      if val do
-        {key, Conformable.conform(spec, val, path ++ [key])}
-      else
+      if val == nil do
         {key, {:error, [error(path ++ [key], input, ":required")]}}
+      else
+        {key, Conformable.conform(spec, val, path ++ [key])}
       end
     end
 

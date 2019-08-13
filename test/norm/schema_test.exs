@@ -40,11 +40,18 @@ defmodule Norm.SchemaTest do
 
     assert %{name: "chris", age: 31} == conform!(%{name: "chris", age: 31}, s)
     assert {:error, errors} = conform(%{name: "chris"}, s)
-    assert errors == ["in: :age val: %{name: \"chris\"} fails: :required"]
+    assert errors == ["val: %{name: \"chris\"} fails: :required in: :age"]
 
     user = schema(%{user: s})
     assert {:error, errors} = conform(%{user: %{age: 31}}, user)
-    assert errors == ["in: :user/:name val: %{age: 31} fails: :required"]
+    assert errors == ["val: %{age: 31} fails: :required in: :user/:name"]
+  end
+
+  test "works with boolean values" do
+    s = schema(%{bool: spec(is_boolean())})
+
+    assert %{bool: true} == conform!(%{bool: true}, s)
+    assert %{bool: false} == conform!(%{bool: false}, s)
   end
 
   describe "generation" do
@@ -87,8 +94,8 @@ defmodule Norm.SchemaTest do
     assert {:other, other} == conform!(other, user_or_other)
     assert {:error, errors} = conform(%{}, user_or_other)
     assert errors == [
-      "in: :user val: %{} fails: Norm.SchemaTest.User",
-      "in: :other val: %{} fails: Norm.SchemaTest.OtherUser"
+      "val: %{} fails: Norm.SchemaTest.User in: :user",
+      "val: %{} fails: Norm.SchemaTest.OtherUser in: :other"
     ]
   end
 
@@ -98,7 +105,7 @@ defmodule Norm.SchemaTest do
     })
 
     assert {:error, errors} = conform(%{name: "chris", age: 31}, user_schema)
-    assert errors == ["in: :age val: %{age: 31, name: \"chris\"} fails: :unexpected"]
+    assert errors == ["val: %{age: 31, name: \"chris\"} fails: :unexpected in: :age"]
   end
 
   test "works with string keys and atom keys" do
@@ -115,8 +122,8 @@ defmodule Norm.SchemaTest do
     assert input == conform!(input, user)
     assert {:error, errors} = conform(%{"name" => 31, age: "chris"}, user)
     assert errors == [
-      "in: :age val: \"chris\" fails: is_integer()",
-      "in: \"name\" val: 31 fails: is_binary()"
+      "val: \"chris\" fails: is_integer() in: :age",
+      "val: 31 fails: is_binary() in: \"name\""
     ]
   end
 
@@ -146,9 +153,9 @@ defmodule Norm.SchemaTest do
 
       assert input == conform!(input, User.s())
       assert {:error, errors} = conform(%User{name: :foo, age: "31", email: 42}, User.s())
-      assert errors == ["in: :age val: \"31\" fails: is_integer()",
-                        "in: :email val: 42 fails: is_binary()",
-                        "in: :name val: :foo fails: is_binary()"]
+      assert errors == ["val: \"31\" fails: is_integer() in: :age",
+                        "val: 42 fails: is_binary() in: :email",
+                        "val: :foo fails: is_binary() in: :name"]
     end
 
     test "only checks the keys that have specs" do
@@ -157,7 +164,7 @@ defmodule Norm.SchemaTest do
 
       assert input == conform!(input, spec)
       assert {:error, errors} = conform(%User{name: 23}, spec)
-      assert errors == ["in: :name val: 23 fails: is_binary()"]
+      assert errors == ["val: 23 fails: is_binary() in: :name"]
     end
 
     @tag :skip

@@ -334,7 +334,7 @@ defmodule Norm do
     Conformer.conform(spec, input)
   end
 
-  @doc ~S"""
+  @doc ~s"""
   Returns the conformed value or raises a mismatch error.
 
   ## Examples
@@ -469,7 +469,7 @@ defmodule Norm do
       iex> conform!("foo", alt(num: spec(is_integer()), str: spec(is_binary())))
       {:str, "foo"}
       iex> conform(true, alt(num: spec(is_integer()), str: spec(is_binary())))
-      {:error, ["in: :num val: true fails: is_integer()", "in: :str val: true fails: is_binary()"]}
+      {:error, ["val: true fails: is_integer() in: :num", "val: true fails: is_binary() in: :str"]}
   """
   def alt(specs) when is_list(specs) do
     %Alt{specs: specs}
