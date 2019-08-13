@@ -99,6 +99,19 @@ defmodule Norm.SchemaTest do
     ]
   end
 
+  test "can have nested alts" do
+    s = schema(%{a: alt(bool: spec(is_boolean()), int: spec(is_integer()))})
+
+    assert %{a: {:bool, true}} == conform!(%{a: true}, s)
+    assert %{a: {:bool, false}} == conform!(%{a: false}, s)
+    assert %{a: {:int, 123}} == conform!(%{a: 123}, s)
+    assert {:error, errors} = conform(%{a: "test"}, s)
+    assert errors == [
+      "val: \"test\" fails: is_boolean() in: :a/:bool",
+      "val: \"test\" fails: is_integer() in: :a/:int"
+    ]
+  end
+
   test "breaks if the input has more keys then we've specified" do
     user_schema = schema(%{
       name: spec(is_binary())
