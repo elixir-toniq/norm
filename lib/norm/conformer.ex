@@ -11,6 +11,19 @@ defmodule Norm.Conformer do
     end
   end
 
+  def group_results(results) do
+    results
+    |> Enum.reduce(%{ok: [], error: []}, fn {result, s}, acc ->
+      Map.put(acc, result, acc[result] ++ [s])
+    end)
+    |> update_in([:ok], & List.flatten(&1))
+    |> update_in([:error], & List.flatten(&1))
+  end
+
+  def error(path, input, msg) do
+    %{path: path, input: input, msg: msg, at: nil}
+  end
+
   def error_to_msg(%{path: path, input: input, msg: msg}) do
     path  = if path == [], do: nil, else: "in: " <> build_path(path)
     val   = "val: #{format_val(input)}"
@@ -33,6 +46,7 @@ defmodule Norm.Conformer do
   defp format_val(msg) when is_atom(msg), do: ":#{msg}"
   defp format_val(val) when is_map(val), do: inspect val
   defp format_val({:index, i}), do: "[#{i}]"
+  defp format_val(t) when is_tuple(t), do: "#{inspect t}"
   defp format_val(msg), do: "#{msg}"
 
 
