@@ -4,6 +4,7 @@ defmodule Norm.Spec.Alt do
   defstruct specs: []
 
   defimpl Norm.Conformer.Conformable do
+    alias Norm.Conformer
     alias Norm.Conformer.Conformable
 
     def conform(%{specs: specs}, input, path) do
@@ -18,9 +19,7 @@ defmodule Norm.Spec.Alt do
               {:error, errors}
           end
         end)
-        |> Enum.reduce(%{ok: [], error: []}, fn {result, s}, acc ->
-          Map.put(acc, result, acc[result] ++ [s])
-        end)
+        |> Conformer.group_results
 
       if Enum.any?(result.ok) do
         {:ok, Enum.at(result.ok, 0)}

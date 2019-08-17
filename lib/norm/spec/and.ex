@@ -1,7 +1,23 @@
 defmodule Norm.Spec.And do
   @moduledoc false
 
+  alias Norm.Spec
+  alias __MODULE__
+
   defstruct [:left, :right]
+
+  def new(l, r) do
+    case {l, r} do
+      {%Spec{}, %Spec{}} ->
+        %__MODULE__{left: l, right: r}
+
+      {%And{}, %Spec{}} ->
+        %__MODULE__{left: l, right: r}
+
+      _ ->
+        raise ArgumentError, "both sides of an `and` must be a predicate"
+    end
+  end
 
   defimpl Norm.Conformer.Conformable do
     alias Norm.Conformer.Conformable
