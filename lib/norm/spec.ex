@@ -5,9 +5,7 @@ defmodule Norm.Spec do
   alias __MODULE__
   alias Norm.Spec.{
     And,
-    Atom,
     Or,
-    Tuple,
   }
 
   defstruct predicate: nil, generator: nil, f: nil
@@ -27,27 +25,6 @@ defmodule Norm.Spec do
 
     quote do
       And.new(unquote(l), unquote(r))
-    end
-  end
-
-  # 2-Tuple
-  def build({first, second}) do
-    quote do
-      %Tuple{args: [unquote(first), unquote(second)]}
-    end
-  end
-
-  # Tuples with more then 2 elements
-  def build({:{}, _, args}) do
-    quote do
-      %Tuple{args: unquote(args)}
-    end
-  end
-
-  # Bare atom's
-  def build(atom) when is_atom(atom) do
-    quote do
-      %Atom{atom: unquote(atom)}
     end
   end
 
@@ -91,8 +68,9 @@ defmodule Norm.Spec do
   end
 
   def build(quoted) do
-    IO.inspect(quoted, label: "Missed one")
-    raise ArgumentError, "Norm can't build a spec from: #{Macro.to_string(quoted)}"
+    spec = Macro.to_string(quoted)
+
+    raise ArgumentError, "Norm can't build a spec from: #{spec}"
   end
 
   if Code.ensure_loaded?(StreamData) do
