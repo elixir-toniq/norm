@@ -89,8 +89,10 @@ conform!(3, spec(greater?(5)))
 Atoms and tuples can be matched without needing to wrap them in a function.
 
 ```elixir
-:some_atom = conform!(:some_atom, :atom)
+:atom = conform!(:atom, :atom)
+
 {1, "hello"} = conform!({1, "hello"}, {spec(is_integer()), spec(is_binary())})
+
 conform!({1, 2}, {:one, :two})
 ** (Norm.MismatchError) val: 1 in: 0 fails: is not an atom.
 val: 2 in: 1 fails: is not an atom.

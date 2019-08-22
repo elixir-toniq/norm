@@ -29,7 +29,7 @@ defmodule Norm.Conformer do
     val   = "val: #{format_val(input)}"
     fails = "fails: #{msg}"
 
-    [val, fails, path]
+    [val, path, fails]
     |> Enum.reject(&is_nil/1)
     |> Enum.join(" ")
   end

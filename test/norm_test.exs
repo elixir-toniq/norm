@@ -29,12 +29,12 @@ defmodule NormTest do
       assert {1, 2, 3} == conform!({1, 2, 3}, three)
       assert {:error, errors} = conform({1, :bar, "foo"}, three)
       assert errors == [
-        "val: :bar fails: is_integer() in: 1",
-        "val: \"foo\" fails: is_integer() in: 2"
+        "val: :bar in: 1 fails: is_integer()",
+        "val: \"foo\" in: 2 fails: is_integer()"
       ]
 
       assert {:error, errors} = conform({:ok, "foo"}, ok)
-      assert errors == ["val: \"foo\" fails: is_integer() in: 1"]
+      assert errors == ["val: \"foo\" in: 1 fails: is_integer()"]
 
       assert {:error, errors} = conform({:ok, "foo", 123}, ok)
       assert errors == ["val: {:ok, \"foo\", 123} fails: incorrect tuple size"]
@@ -49,10 +49,10 @@ defmodule NormTest do
 
       assert {:ok, %{name: "chris"}} == conform!({:ok, %{name: "chris", age: 31}}, ok)
       assert {:error, errors} = conform({:ok, %{age: 31}}, ok)
-      assert errors == ["val: %{age: 31} fails: :required in: 1/:name"]
+      assert errors == ["val: %{age: 31} in: 1/:name fails: :required"]
     end
 
-    @tag skip
+    @tag :skip
     test "can spec keyword lists" do
       flunk "Not Implemented"
     end
@@ -132,8 +132,8 @@ defmodule NormTest do
       assert {:b, "foo"} == conform!("foo", spec)
       assert {:error, errors} = conform(%{name: :alice}, spec)
       assert errors == [
-        "val: :alice fails: is_binary() in: :a/:name",
-        "val: %{name: :alice} fails: is_binary() in: :b"
+        "val: :alice in: :a/:name fails: is_binary()",
+        "val: %{name: :alice} in: :b fails: is_binary()"
       ]
     end
 

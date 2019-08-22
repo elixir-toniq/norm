@@ -218,8 +218,8 @@ defmodule Norm do
 
   conform!(%{type: :delete}, event)
   ** (Norm.MismatchError)
-    in: :create/:type val: :delete fails: &(&1 == :create)
-    in: :update/:type val: :delete fails: &(&1 == :update)
+    val: :delete in: :create/:type fails: &(&1 == :create)
+    val: :delete in: :update/:type fails: &(&1 == :update)
   ```
 
   ## Generators
@@ -376,7 +376,8 @@ defmodule Norm do
       iex> conform!(42, spec(is_integer()))
       42
       iex> conform!(42, spec(is_binary()))
-      ** (Norm.MismatchError) val: 42 fails: is_binary()
+      ** (Norm.MismatchError) Could not conform input:
+      val: 42 fails: is_binary()
   """
   def conform!(input, spec) do
     case Conformer.conform(spec, input) do
@@ -503,7 +504,7 @@ defmodule Norm do
       iex> conform!("foo", alt(num: spec(is_integer()), str: spec(is_binary())))
       {:str, "foo"}
       iex> conform(true, alt(num: spec(is_integer()), str: spec(is_binary())))
-      {:error, ["val: true fails: is_integer() in: :num", "val: true fails: is_binary() in: :str"]}
+      {:error, ["val: true in: :num fails: is_integer()", "val: true in: :str fails: is_binary()"]}
   """
   def alt(specs) when is_list(specs) do
     %Alt{specs: specs}

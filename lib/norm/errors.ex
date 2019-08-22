@@ -4,7 +4,7 @@ defmodule Norm.MismatchError do
   def exception(errors) do
     msg = Enum.join(errors, "\n")
 
-    %__MODULE__{message: msg}
+    %__MODULE__{message: "Could not conform input:\n" <> msg}
   end
 end
 
