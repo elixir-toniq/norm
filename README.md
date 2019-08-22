@@ -84,6 +84,24 @@ conform!(3, spec(greater?(5)))
     (norm) lib/norm.ex:44: Norm.conform!/2
 ```
 
+### Tuples and atoms
+
+Atoms and tuples can be matched without needing to wrap them in a function.
+
+```elixir
+:some_atom = conform!(:some_atom, :atom)
+{1, "hello"} = conform!({1, "hello"}, {spec(is_integer()), spec(is_binary())})
+{:ok, "alice"} = conform!({:ok, "alice"}, {:ok, spec(is_binary())})
+```
+
+This allows you to conform results from functions that return `{:ok, term()}` and
+`{:error, term()}` tuples.
+
+```elixir
+result_spec = {:ok, schema(%{name: spec(is_binary()), age: spec(is_integer())})}
+{:ok, user} = conform!(User.get(), result_spec)
+```
+
 ### Schemas
 
 Norm provides a `schema/1` function for specifying maps and structs:
@@ -327,9 +345,6 @@ Norm is being actively worked on. Any contributions are very welcome. Here is a
 limited set of ideas that are coming soon.
 
 - [ ] Support generators for other primitive types (floats, etc.)
-- [ ] Specify shapes of common elixir primitives (tuples and atoms). This
-  will allow us to match on the common `{:ok, term()} | {:error, term()}`
-  pattern in elixir.
 - [ ] selections shouldn't need a path if you just want to match all the keys in the schema
 - [ ] Support "sets" of literal values
 - [ ] specs for functions and anonymous functions
