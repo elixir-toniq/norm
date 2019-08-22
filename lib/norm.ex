@@ -69,6 +69,39 @@ defmodule Norm do
       (norm) lib/norm.ex:44: Norm.conform!/2
   ```
 
+  ### Tuples and atoms
+
+  Atoms and tuples can be matched without needing to wrap them in a function.
+
+  ```elixir
+  :some_atom = conform!(:some_atom, :atom)
+  {1, "hello"} = conform!({1, "hello"}, {spec(is_integer()), spec(is_binary())})
+  conform!({1, 2}, {:one, :two})
+  ** (Norm.MismatchError) val: 1 in: 0 fails: is not an atom.
+  val: 2 in: 1 fails: is not an atom.
+  ```
+
+  Because Norm supports matching on bare tuples we can easily validate functions
+  that return `{:ok, term()}` and `{:error, term()}` tuples.
+
+  ```elixir
+  # if User.get_name/1 succeeds it returns {:ok, binary()}
+  result = User.get_name(123)
+  {:ok, name} = conform!(result, {:ok, spec(is_binary())})
+  ```
+
+  These specifications can be combined with `one_of/1` to create union types.
+
+  ```elixir
+  result_spec = one_of([
+    {:ok, spec(is_binary())},
+    {:error, spec(fn _ -> true end)},
+  ])
+
+  {:ok, "alice"} = conform!(User.get_name(123), result_spec)
+  {:error, "user does not exist"} = conform!(User.get_name(-42), result_spec)
+  ```
+
   ### Schemas
 
   Norm provides a `schema/1` function for specifying maps and structs:
@@ -185,8 +218,8 @@ defmodule Norm do
 
   conform!(%{type: :delete}, event)
   ** (Norm.MismatchError)
-    in: :create/:type val: :delete fails: &(&1 == :create)
-    in: :update/:type val: :delete fails: &(&1 == :update)
+    val: :delete in: :create/:type fails: &(&1 == :create)
+    val: :delete in: :update/:type fails: &(&1 == :update)
   ```
 
   ## Generators
@@ -308,6 +341,7 @@ defmodule Norm do
   alias Norm.Spec.{
     Alt,
     Selection,
+    Union,
   }
   alias Norm.Schema
   alias Norm.MismatchError
@@ -342,7 +376,8 @@ defmodule Norm do
       iex> conform!(42, spec(is_integer()))
       42
       iex> conform!(42, spec(is_binary()))
-      ** (Norm.MismatchError) val: 42 fails: is_binary()
+      ** (Norm.MismatchError) Could not conform input:
+      val: 42 fails: is_binary()
   """
   def conform!(input, spec) do
     case Conformer.conform(spec, input) do
@@ -469,10 +504,25 @@ defmodule Norm do
       iex> conform!("foo", alt(num: spec(is_integer()), str: spec(is_binary())))
       {:str, "foo"}
       iex> conform(true, alt(num: spec(is_integer()), str: spec(is_binary())))
-      {:error, ["val: true fails: is_integer() in: :num", "val: true fails: is_binary() in: :str"]}
+      {:error, ["val: true in: :num fails: is_integer()", "val: true in: :str fails: is_binary()"]}
   """
   def alt(specs) when is_list(specs) do
     %Alt{specs: specs}
+  end
+
+  @doc """
+  Chooses between a list of options. Unlike `alt/1` the options don't need to
+  be tagged. Specs are always tested in order and will short circuit if the
+  data passes a validation.
+
+  ## Examples
+      iex> conform!("chris", one_of([spec(is_binary()), :alice]))
+      "chris"
+      iex> conform!(:alice, one_of([spec(is_binary()), :alice]))
+      :alice
+  """
+  def one_of(specs) when is_list(specs) do
+    Union.new(specs)
   end
 
   @doc ~S"""
