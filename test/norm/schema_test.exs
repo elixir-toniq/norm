@@ -1,6 +1,7 @@
 defmodule Norm.SchemaTest do
   use ExUnit.Case, async: true
   import Norm
+  import ExUnitProperties, except: [gen: 1]
 
   defmodule User do
     import Norm
@@ -10,7 +11,7 @@ defmodule Norm.SchemaTest do
     def s, do: schema(%__MODULE__{
       name: spec(is_binary()),
       email: spec(is_binary()),
-      age: spec(is_integer())
+      age: spec(is_integer() and (& &1 >= 0))
     })
 
     def chris do
@@ -180,9 +181,22 @@ defmodule Norm.SchemaTest do
       assert errors == ["val: 23 fails: is_binary() in: :name"]
     end
 
-    @tag :skip
-    test "can generate proper structs" do
-      flunk "Not Implemented"
+    property "can generate proper structs" do
+      check all user <- gen(User.s()) do
+        assert match?(%User{}, user)
+        assert is_integer(user.age) and user.age >= 0
+        assert is_binary(user.name)
+        assert is_binary(user.email)
+      end
+    end
+
+    property "can generate structs with a subset of keys specified" do
+      check all user <- gen(schema(%User{age: spec(is_integer() and (& &1 > 0))})) do
+        assert match?(%User{}, user)
+        assert is_integer(user.age) and user.age >= 0
+        assert is_nil(user.name)
+        assert is_nil(user.email)
+      end
     end
   end
 end

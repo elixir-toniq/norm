@@ -112,14 +112,10 @@ defmodule NormTest do
   end
 
   describe "selection/1" do
-    @tag :skip
     test "returns an error if passed a non-schema" do
-      flunk "Not implemented yet"
-    end
-
-    @tag :skip
-    test "specifies a subset of a schema" do
-      flunk "Not implemented yet"
+      assert_raise FunctionClauseError, fn ->
+        selection(spec(is_binary()), [])
+      end
     end
   end
 
@@ -149,11 +145,5 @@ defmodule NormTest do
       end
     end
   end
-
-  describe "cat/1" do
-    @tag :skip
-    test "checks a list of options" do
-      flunk "Not implemented"
-    end
-  end
 end
+

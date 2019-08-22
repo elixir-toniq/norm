@@ -121,14 +121,26 @@ defmodule Norm.Schema do
     defimpl Norm.Generatable do
       alias Norm.Generatable
 
-      def gen(%{specs: specs}) do
+      def gen(%{struct: target, specs: specs}) do
         case Enum.reduce(specs, %{}, &to_gen/2) do
           {:error, error} ->
             {:error, error}
 
           generator ->
-            {:ok, StreamData.fixed_map(generator)}
+            to_streamdata(generator, target)
         end
+      end
+
+      defp to_streamdata(generator, nil) do
+        {:ok, StreamData.fixed_map(generator)}
+      end
+      defp to_streamdata(generator, target) do
+        sd =
+          generator
+          |> StreamData.fixed_map()
+          |> StreamData.bind(fn map -> StreamData.constant(struct(target, map)) end)
+
+        {:ok, sd}
       end
 
       def to_gen(_, {:error, error}), do: {:error, error}
