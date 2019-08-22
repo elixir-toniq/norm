@@ -1,15 +1,91 @@
 defmodule NormTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   doctest Norm, import: true
   import Norm
+  import ExUnitProperties, except: [gen: 1]
 
-  describe "gen" do
-    @tag :skip
-    test "uses the generator created by spec" do
+  describe "conform" do
+    test "accepts specs" do
+      assert {:ok, 123} = conform(123, spec(is_integer()))
     end
 
-    @tag :skip
-    test "returns an error if the generator can not be found" do
+    test "can match atoms" do
+      assert :ok == conform!(:ok, :ok)
+      assert {:error, errors} = conform("foo", :ok)
+      assert errors == ["val: \"foo\" fails: is not an atom."]
+      assert {:error, errors} = conform(:mismatch, :ok)
+      assert errors == ["val: :mismatch fails: == :ok"]
+    end
+
+    test "can match patterns of tuples" do
+      ok = {:ok, spec(is_integer())}
+      error = {:error, spec(is_binary())}
+      three = {spec(is_integer()), spec(is_integer()), spec(is_integer())}
+
+      assert {:ok, 123} == conform!({:ok, 123}, ok)
+
+      assert {:error, "something's wrong"} == conform!({:error, "something's wrong"}, error)
+
+      assert {1, 2, 3} == conform!({1, 2, 3}, three)
+      assert {:error, errors} = conform({1, :bar, "foo"}, three)
+      assert errors == [
+        "val: :bar fails: is_integer() in: 1",
+        "val: \"foo\" fails: is_integer() in: 2"
+      ]
+
+      assert {:error, errors} = conform({:ok, "foo"}, ok)
+      assert errors == ["val: \"foo\" fails: is_integer() in: 1"]
+
+      assert {:error, errors} = conform({:ok, "foo", 123}, ok)
+      assert errors == ["val: {:ok, \"foo\", 123} fails: incorrect tuple size"]
+
+      assert {:error, errors} = conform({:ok, 123, "foo"}, ok)
+      assert errors == ["val: {:ok, 123, \"foo\"} fails: incorrect tuple size"]
+    end
+
+    test "tuples can be composed with schema's and selections" do
+      user = schema(%{name: spec(is_binary()), age: spec(is_integer())})
+      ok = {:ok, selection(user, [:name])}
+
+      assert {:ok, %{name: "chris"}} == conform!({:ok, %{name: "chris", age: 31}}, ok)
+      assert {:error, errors} = conform({:ok, %{age: 31}}, ok)
+      assert errors == ["val: %{age: 31} fails: :required in: 1/:name"]
+    end
+  end
+
+  describe "gen" do
+    property "works with atoms" do
+      check all foo <- gen(:foo) do
+        assert is_atom(foo)
+        assert foo == :foo
+      end
+
+      check all a <- gen(spec(is_atom())) do
+        assert is_atom(a)
+      end
+    end
+
+    property "works with tuples" do
+      ok = {:ok, schema(%{name: spec(is_binary())})}
+
+      check all tuple <- gen(ok) do
+        assert {:ok, user} = tuple
+        assert Map.keys(user) == [:name]
+        assert is_binary(user.name)
+      end
+
+      assert_raise Norm.GeneratorError, fn ->
+        gen({spec(&(&1 > 0)), spec(is_binary())})
+      end
+
+      ints = {spec(is_binary()), spec(is_integer()), spec(is_integer())}
+
+      check all is <- gen(ints) do
+        assert {a, b, c} = is
+        assert is_binary(a)
+        assert is_integer(b)
+        assert is_integer(c)
+      end
     end
   end
 
@@ -36,14 +112,10 @@ defmodule NormTest do
   end
 
   describe "selection/1" do
-    @tag :skip
     test "returns an error if passed a non-schema" do
-      flunk "Not implemented yet"
-    end
-
-    @tag :skip
-    test "specifies a subset of a schema" do
-      flunk "Not implemented yet"
+      assert_raise FunctionClauseError, fn ->
+        selection(spec(is_binary()), [])
+      end
     end
   end
 
@@ -73,11 +145,5 @@ defmodule NormTest do
       end
     end
   end
-
-  describe "cat/1" do
-    @tag :skip
-    test "checks a list of options" do
-      flunk "Not implemented"
-    end
-  end
 end
+

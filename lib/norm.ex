@@ -406,8 +406,8 @@ defmodule Norm do
       Generator.new(spec, generator)
     end
   else
-    def with_gen(_spec, _) do
-      raise Norm.GeneratorLibraryError
+    def with_gen(spec, _) do
+      Generator.new(spec, :null)
     end
   end
 

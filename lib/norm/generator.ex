@@ -18,7 +18,12 @@ defmodule Norm.Generator do
 
   defimpl Norm.Generatable do
     def gen(%{generator: gen}) do
-      {:ok, gen}
+      if gen == :null do
+        raise Norm.GeneratorLibraryError
+      else
+        {:ok, gen}
+      end
     end
   end
 end
+
