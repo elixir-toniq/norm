@@ -84,6 +84,39 @@ conform!(3, spec(greater?(5)))
     (norm) lib/norm.ex:44: Norm.conform!/2
 ```
 
+### Tuples and atoms
+
+Atoms and tuples can be matched without needing to wrap them in a function.
+
+```elixir
+:some_atom = conform!(:some_atom, :atom)
+{1, "hello"} = conform!({1, "hello"}, {spec(is_integer()), spec(is_binary())})
+conform!({1, 2}, {:one, :two})
+** (Norm.MismatchError) val: 1 in: 0 fails: is not an atom.
+val: 2 in: 1 fails: is not an atom.
+```
+
+Because Norm supports matching on bare tuples we can easily validate functions
+that return `{:ok, term()}` and `{:error, term()}` tuples.
+
+```elixir
+# if User.get_name/1 succeeds it returns {:ok, binary()}
+result = User.get_name(123)
+{:ok, name} = conform!(result, {:ok, spec(is_binary())})
+```
+
+These specifications can be combined with `one_of/1` to create union types.
+
+```elixir
+result_spec = one_of([
+  {:ok, spec(is_binary())},
+  {:error, spec(fn _ -> true end)},
+])
+
+{:ok, "alice"} = conform!(User.get_name(123), result_spec)
+{:error, "user does not exist"} = conform!(User.get_name(-42), result_spec)
+```
+
 ### Schemas
 
 Norm provides a `schema/1` function for specifying maps and structs:
@@ -327,9 +360,7 @@ Norm is being actively worked on. Any contributions are very welcome. Here is a
 limited set of ideas that are coming soon.
 
 - [ ] Support generators for other primitive types (floats, etc.)
-- [ ] Specify shapes of common elixir primitives (tuples and atoms). This
-  will allow us to match on the common `{:ok, term()} | {:error, term()}`
-  pattern in elixir.
+- [ ] More streamlined specification of keyword lists.
 - [ ] selections shouldn't need a path if you just want to match all the keys in the schema
 - [ ] Support "sets" of literal values
 - [ ] specs for functions and anonymous functions

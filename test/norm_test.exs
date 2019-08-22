@@ -51,6 +51,11 @@ defmodule NormTest do
       assert {:error, errors} = conform({:ok, %{age: 31}}, ok)
       assert errors == ["val: %{age: 31} fails: :required in: 1/:name"]
     end
+
+    @tag skip
+    test "can spec keyword lists" do
+      flunk "Not Implemented"
+    end
   end
 
   describe "gen" do
