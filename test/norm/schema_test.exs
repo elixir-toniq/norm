@@ -113,13 +113,12 @@ defmodule Norm.SchemaTest do
     ]
   end
 
-  test "breaks if the input has more keys then we've specified" do
+  test "only returns specced keys" do
     user_schema = schema(%{
       name: spec(is_binary())
     })
 
-    assert {:error, errors} = conform(%{name: "chris", age: 31}, user_schema)
-    assert errors == ["val: %{age: 31, name: \"chris\"} in: :age fails: :unexpected"]
+    assert {:ok, %{name: "chris"}} == conform(%{name: "chris", age: 31}, user_schema)
   end
 
   test "works with string keys and atom keys" do

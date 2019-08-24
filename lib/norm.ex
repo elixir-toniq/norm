@@ -342,6 +342,7 @@ defmodule Norm do
     Alt,
     Selection,
     Union,
+    Collection,
   }
   alias Norm.Schema
   alias Norm.MismatchError
@@ -536,6 +537,31 @@ defmodule Norm do
   """
   def selection(%Schema{}=schema, path) do
     Selection.new(schema, path)
+  end
+
+  @doc ~S"""
+  Specifies a generic collection. Collections can be any enumerable type.
+
+  ## Examples
+
+      iex> conform!([:a, :b, :c], coll_of(spec(is_atom())))
+      [:a, :b, :c]
+  """
+  def coll_of(spec, opts \\ []) do
+    Collection.new(spec, opts)
+  end
+
+  @doc ~S"""
+  Specifies a map with a type of key and a type of value.
+
+  ## Examples
+
+      iex> conform!(%{a: 1, b: 2, c: 3}, map_of(spec(is_atom()), spec(is_integer())))
+      %{a: 1, b: 2, c: 3}
+  """
+  def map_of(kpred, vpred, opts \\ []) do
+    opts = Keyword.merge(opts, [kind: :map])
+    Collection.new({kpred, vpred}, opts)
   end
 
   # @doc ~S"""
