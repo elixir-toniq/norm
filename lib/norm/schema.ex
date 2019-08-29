@@ -70,10 +70,6 @@ defmodule Norm.Schema do
         |> Map.keys
         |> Enum.reject(& &1 == :__struct__)
 
-      unexpected_key_errors =
-        (actual_keys -- expected_keys)
-        |> Enum.map(fn key -> error(path ++ [key], input, ":unexpected") end)
-
       results =
         specs
         |> Enum.map(& check_spec(&1, input, path))
@@ -84,7 +80,6 @@ defmodule Norm.Schema do
       errors =
         results.error
         |> Enum.flat_map(fn {_, error} -> error end)
-        |> Enum.concat(unexpected_key_errors)
 
       if Enum.any?(errors) do
         {:error, errors}

@@ -150,5 +150,12 @@ defmodule NormTest do
       end
     end
   end
+
+  describe "map_of" do
+    test "can spec generic maps" do
+      spec = map_of(spec(is_integer()), spec(is_atom()))
+      assert %{1 => :foo, 2 => :bar} == conform!(%{1 => :foo, 2 => :bar}, spec)
+    end
+  end
 end
 
