@@ -61,15 +61,6 @@ defmodule Norm.Schema do
     end
 
     defp check_specs(specs, input, path) do
-      expected_keys =
-        specs
-        |> Enum.map(fn {key, _} -> key end)
-
-      actual_keys =
-        input
-        |> Map.keys
-        |> Enum.reject(& &1 == :__struct__)
-
       results =
         specs
         |> Enum.map(& check_spec(&1, input, path))
