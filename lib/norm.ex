@@ -159,10 +159,9 @@ defmodule Norm do
   occurs when conforming values. If you need to match on string keys you
   should specify your schema with string keys.
 
-  Schema's expect the exact set of keys specified. Passing unspecified keys
-  to a schema is considered an error. This inhibits a schema's ability to
-  grow. You may need to do this but generally you'll want to create
-  a "selection" of the schema in order to allow for schema growth over time.
+  Schema's accomodate growth by disregarding any unspecified keys in the input map.
+  This allows callers to start sending new data over time without coordination
+  with the consuming function.
 
   ### Selections
 
