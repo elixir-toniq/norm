@@ -81,6 +81,9 @@ defmodule Norm.Spec do
           :is_integer ->
             {:ok, StreamData.integer()}
 
+          :is_float ->
+            {:ok, StreamData.float()}
+
           :is_binary ->
             {:ok, StreamData.binary()}
 
