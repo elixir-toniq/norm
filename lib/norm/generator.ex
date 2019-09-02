@@ -26,4 +26,3 @@ defmodule Norm.Generator do
     end
   end
 end
-

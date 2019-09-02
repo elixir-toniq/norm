@@ -9,10 +9,10 @@ defmodule Norm.Schema do
   # If we're building a schema from a struct then we need to add a default spec
   # for each key that only checks for presence. This allows users to specify
   # struct types without needing to specify specs for each key
-  def build(%{__struct__: name}=struct) do
+  def build(%{__struct__: name} = struct) do
     specs =
       struct
-      |> Map.from_struct
+      |> Map.from_struct()
       |> Enum.to_list()
 
     %Schema{specs: specs, struct: name}
@@ -49,7 +49,7 @@ defmodule Norm.Schema do
       else
         short_name =
           target
-          |> Atom.to_string
+          |> Atom.to_string()
           |> String.replace("Elixir.", "")
 
         {:error, [error(path, input, "#{short_name}")]}
@@ -63,7 +63,7 @@ defmodule Norm.Schema do
     defp check_specs(specs, input, path) do
       results =
         specs
-        |> Enum.map(& check_spec(&1, input, path))
+        |> Enum.map(&check_spec(&1, input, path))
         |> Enum.reduce(%{ok: [], error: []}, fn {key, {result, conformed}}, acc ->
           Map.put(acc, result, acc[result] ++ [{key, conformed}])
         end)
@@ -88,6 +88,7 @@ defmodule Norm.Schema do
           {key, {:ok, Map.get(input, key)}}
       end
     end
+
     defp check_spec({key, spec}, input, path) do
       val = Map.get(input, key)
 
@@ -120,6 +121,7 @@ defmodule Norm.Schema do
       defp to_streamdata(generator, nil) do
         {:ok, StreamData.fixed_map(generator)}
       end
+
       defp to_streamdata(generator, target) do
         sd =
           generator
@@ -130,6 +132,7 @@ defmodule Norm.Schema do
       end
 
       def to_gen(_, {:error, error}), do: {:error, error}
+
       def to_gen({key, spec}, generator) do
         case Generatable.gen(spec) do
           {:ok, g} ->

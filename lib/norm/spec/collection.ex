@@ -14,7 +14,7 @@ defmodule Norm.Spec.Collection do
     def conform(%{spec: spec, opts: opts}, input, path) do
       results =
         input
-        |> Enum.map(& Conformable.conform(spec, &1, path))
+        |> Enum.map(&Conformable.conform(spec, &1, path))
         |> Conformer.group_results()
 
       if Enum.any?(results.error) do
@@ -33,4 +33,3 @@ defmodule Norm.Spec.Collection do
     end
   end
 end
-

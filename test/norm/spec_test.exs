@@ -11,7 +11,7 @@ defmodule Norm.SpecTest do
 
   describe "spec/1" do
     test "can compose specs with 'and'" do
-      can_drink = spec(is_integer() and &(&1 >= 21))
+      can_drink = spec(is_integer() and (&(&1 >= 21)))
 
       assert 21 == conform!(21, can_drink)
       assert {:error, errors} = conform("21", can_drink)
@@ -21,9 +21,9 @@ defmodule Norm.SpecTest do
     end
 
     test "'and' and 'or' can be chained" do
-      s = spec(is_integer() and (& &1 >= 21) and (& &1 < 30))
+      s = spec(is_integer() and (&(&1 >= 21)) and (&(&1 < 30)))
 
-      check all i <- StreamData.integer(21..29) do
+      check all(i <- StreamData.integer(21..29)) do
         assert i == conform!(i, s)
       end
     end
@@ -62,28 +62,31 @@ defmodule Norm.SpecTest do
 
     test "throws an error if the filter is too vague" do
       assert_raise StreamData.FilterTooNarrowError, fn ->
-        Enum.take(gen(spec(is_binary() and &(&1 =~ ~r/foobarbaz/))), 1)
+        Enum.take(gen(spec(is_binary() and (&(&1 =~ ~r/foobarbaz/)))), 1)
       end
     end
 
     test "works with 'and'" do
-      name = spec(is_binary() and &(String.length(&1) > 0))
+      name = spec(is_binary() and (&(String.length(&1) > 0)))
+
       for name <- Enum.take(gen(name), 3) do
         assert is_binary(name)
         assert String.length(name) > 0
       end
 
-      age = spec(is_integer() and &(&1 > 0))
+      age = spec(is_integer() and (&(&1 > 0)))
+
       for i <- Enum.take(gen(age), 3) do
         assert is_integer(i)
         assert i > 0
       end
 
-      assert gen(spec(is_integer() and fn i -> i > 0 end and &(&1 > 60)))
+      assert gen(spec(is_integer() and fn i -> i > 0 end and (&(&1 > 60))))
     end
 
     test "works with 'or'" do
       name_or_age = spec(is_integer() or is_binary())
+
       for f <- Enum.take(gen(name_or_age), 10) do
         assert is_binary(f) || is_integer(f)
       end
@@ -91,7 +94,7 @@ defmodule Norm.SpecTest do
 
     test "'or' returns an error if it can't infer both generators" do
       assert_raise Norm.GeneratorError, fn ->
-        Enum.take(gen(spec(is_integer() or &(&1 > 0))), 1)
+        Enum.take(gen(spec(is_integer() or (&(&1 > 0)))), 1)
       end
     end
 
@@ -99,7 +102,7 @@ defmodule Norm.SpecTest do
       require Integer
       evens = spec(is_integer() and Integer.is_even())
 
-      check all i <- gen(evens) do
+      check all(i <- gen(evens)) do
         assert is_integer(i)
         assert rem(i, 2) == 0
       end

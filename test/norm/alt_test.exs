@@ -4,7 +4,7 @@ defmodule Norm.Spec.AltTest do
 
   describe "generation" do
     test "returns one of the options" do
-      spec = alt([s: spec(is_binary()), i: spec(is_integer()), a: spec(is_atom())])
+      spec = alt(s: spec(is_binary()), i: spec(is_integer()), a: spec(is_atom()))
 
       for {type, value} <- Enum.take(gen(spec), 5) do
         case type do

@@ -10,12 +10,11 @@ defmodule Norm.MixProject do
       elixir: "~> 1.7",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-
       description: description(),
       package: package(),
       name: "Norm",
       source_url: "https://github.com/keathley/norm",
-      docs: docs(),
+      docs: docs()
     ]
   end
 
@@ -43,7 +42,7 @@ defmodule Norm.MixProject do
     [
       name: "norm",
       licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/keathley/norm"},
+      links: %{"GitHub" => "https://github.com/keathley/norm"}
     ]
   end
 
@@ -51,7 +50,7 @@ defmodule Norm.MixProject do
     [
       source_ref: "v#{@version}",
       source_url: "https://github.com/keathley/norm",
-      main: "Norm",
+      main: "Norm"
     ]
   end
 end

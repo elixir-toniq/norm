@@ -19,7 +19,7 @@ defmodule Norm.Spec.Alt do
               {:error, errors}
           end
         end)
-        |> Conformer.group_results
+        |> Conformer.group_results()
 
       if Enum.any?(result.ok) do
         {:ok, Enum.at(result.ok, 0)}
@@ -42,6 +42,7 @@ defmodule Norm.Spec.Alt do
       end
 
       def to_gen(_, {:error, error}), do: {:error, error}
+
       def to_gen({_key, spec}, generators) do
         case Norm.Generatable.gen(spec) do
           {:ok, g} ->
@@ -54,4 +55,3 @@ defmodule Norm.Spec.Alt do
     end
   end
 end
-

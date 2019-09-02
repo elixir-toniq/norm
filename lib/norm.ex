@@ -337,12 +337,14 @@ defmodule Norm do
   alias Norm.Generatable
   alias Norm.Generator
   alias Norm.Spec
+
   alias Norm.Spec.{
     Alt,
     Selection,
     Union,
-    Collection,
+    Collection
   }
+
   alias Norm.Schema
   alias Norm.MismatchError
   alias Norm.GeneratorError
@@ -398,7 +400,7 @@ defmodule Norm do
   """
   def valid?(input, spec) do
     case Conformer.conform(spec, input) do
-      {:ok, _}    -> true
+      {:ok, _} -> true
       {:error, _} -> false
     end
   end
@@ -437,7 +439,7 @@ defmodule Norm do
       ["hello world", "hello world", "hello world"]
   """
   if Code.ensure_loaded?(StreamData) do
-    def with_gen(spec, %StreamData{}=generator) do
+    def with_gen(spec, %StreamData{} = generator) do
       Generator.new(spec, generator)
     end
   else
@@ -534,7 +536,7 @@ defmodule Norm do
       iex> conform!(%{age: 31}, selection(schema(%{age: spec(is_integer()), name: spec(is_binary())}), [:age]))
       %{age: 31}
   """
-  def selection(%Schema{}=schema, path) do
+  def selection(%Schema{} = schema, path) do
     Selection.new(schema, path)
   end
 
@@ -559,7 +561,7 @@ defmodule Norm do
       %{a: 1, b: 2, c: 3}
   """
   def map_of(kpred, vpred, opts \\ []) do
-    opts = Keyword.merge(opts, [kind: :map])
+    opts = Keyword.merge(opts, kind: :map)
     Collection.new({kpred, vpred}, opts)
   end
 
@@ -605,4 +607,3 @@ defmodule Norm do
   #   end
   # end
 end
-

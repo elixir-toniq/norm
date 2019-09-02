@@ -28,10 +28,11 @@ defmodule NormTest do
 
       assert {1, 2, 3} == conform!({1, 2, 3}, three)
       assert {:error, errors} = conform({1, :bar, "foo"}, three)
+
       assert errors == [
-        "val: :bar in: 1 fails: is_integer()",
-        "val: \"foo\" in: 2 fails: is_integer()"
-      ]
+               "val: :bar in: 1 fails: is_integer()",
+               "val: \"foo\" in: 2 fails: is_integer()"
+             ]
 
       assert {:error, errors} = conform({:ok, "foo"}, ok)
       assert errors == ["val: \"foo\" in: 1 fails: is_integer()"]
@@ -54,18 +55,18 @@ defmodule NormTest do
 
     @tag :skip
     test "can spec keyword lists" do
-      flunk "Not Implemented"
+      flunk("Not Implemented")
     end
   end
 
   describe "gen" do
     property "works with atoms" do
-      check all foo <- gen(:foo) do
+      check all(foo <- gen(:foo)) do
         assert is_atom(foo)
         assert foo == :foo
       end
 
-      check all a <- gen(spec(is_atom())) do
+      check all(a <- gen(spec(is_atom()))) do
         assert is_atom(a)
       end
     end
@@ -73,7 +74,7 @@ defmodule NormTest do
     property "works with tuples" do
       ok = {:ok, schema(%{name: spec(is_binary())})}
 
-      check all tuple <- gen(ok) do
+      check all(tuple <- gen(ok)) do
         assert {:ok, user} = tuple
         assert Map.keys(user) == [:name]
         assert is_binary(user.name)
@@ -85,7 +86,7 @@ defmodule NormTest do
 
       ints = {spec(is_binary()), spec(is_integer()), spec(is_integer())}
 
-      check all is <- gen(ints) do
+      check all(is <- gen(ints)) do
         assert {a, b, c} = is
         assert is_binary(a)
         assert is_integer(b)
@@ -97,10 +98,10 @@ defmodule NormTest do
   describe "with_gen" do
     test "overrides the default generator" do
       spec = with_gen(spec(is_integer()), gen(spec(is_binary())))
-      for str <- Enum.take(gen(spec), 5), do: assert is_binary(str)
+      for str <- Enum.take(gen(spec), 5), do: assert(is_binary(str))
 
       spec = with_gen(schema(%{foo: spec(is_integer())}), StreamData.constant("foo"))
-      for str <- Enum.take(gen(spec), 5), do: assert str == "foo"
+      for str <- Enum.take(gen(spec), 5), do: assert(str == "foo")
     end
   end
 
@@ -131,20 +132,23 @@ defmodule NormTest do
       assert {:a, %{name: "alice"}} == conform!(%{name: "alice"}, spec)
       assert {:b, "foo"} == conform!("foo", spec)
       assert {:error, errors} = conform(%{name: :alice}, spec)
+
       assert errors == [
-        "val: :alice in: :a/:name fails: is_binary()",
-        "val: %{name: :alice} in: :b fails: is_binary()"
-      ]
+               "val: :alice in: :a/:name fails: is_binary()",
+               "val: %{name: :alice} in: :b fails: is_binary()"
+             ]
     end
 
     test "can generate data" do
       spec = alt(a: spec(is_binary()), b: spec(is_integer()))
+
       vals =
         spec
         |> gen()
         |> Enum.take(5)
 
       assert Enum.count(vals) == 5
+
       for val <- vals do
         assert is_binary(val) || is_integer(val)
       end
@@ -158,4 +162,3 @@ defmodule NormTest do
     end
   end
 end
-
