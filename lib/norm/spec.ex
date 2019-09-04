@@ -3,9 +3,10 @@ defmodule Norm.Spec do
   # Provides a struct to encapsulate specs
 
   alias __MODULE__
+
   alias Norm.Spec.{
     And,
-    Or,
+    Or
   }
 
   defstruct predicate: nil, generator: nil, f: nil
@@ -29,7 +30,7 @@ defmodule Norm.Spec do
   end
 
   # Anonymous functions
-  def build(quoted={f, _, _args}) when f in [:&, :fn] do
+  def build(quoted = {f, _, _args}) when f in [:&, :fn] do
     predicate = Macro.to_string(quoted)
 
     quote do
@@ -42,7 +43,7 @@ defmodule Norm.Spec do
   end
 
   # Standard functions
-  def build(quoted={a, _, args}) when is_atom(a) and is_list(args) do
+  def build(quoted = {a, _, args}) when is_atom(a) and is_list(args) do
     predicate = Macro.to_string(quoted)
 
     quote do
@@ -55,7 +56,7 @@ defmodule Norm.Spec do
   end
 
   # Remote call
-  def build({{:., _, _}, _, _}=quoted) do
+  def build({{:., _, _}, _, _} = quoted) do
     predicate = Macro.to_string(quoted)
 
     quote do

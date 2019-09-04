@@ -2,7 +2,7 @@ defmodule Norm.Spec.Selection do
   @moduledoc false
   # Provides the definition for selections
 
-  defstruct [subset: nil]
+  defstruct subset: nil
 
   alias Norm.Schema
   alias Norm.SpecError
@@ -12,6 +12,7 @@ defmodule Norm.Spec.Selection do
   end
 
   defp select(_, [], selection), do: %__MODULE__{subset: selection}
+
   defp select(schema, [selector | rest], selection) do
     case selector do
       {key, inner} ->
@@ -51,6 +52,7 @@ defmodule Norm.Spec.Selection do
       end
 
       defp to_gen(_, {:error, error}), do: {:error, error}
+
       defp to_gen({key, spec}, generator) do
         case Generatable.gen(spec) do
           {:ok, g} ->
@@ -98,4 +100,3 @@ defmodule Norm.Spec.Selection do
     end
   end
 end
-

@@ -16,8 +16,8 @@ defmodule Norm.Conformer do
     |> Enum.reduce(%{ok: [], error: []}, fn {result, s}, acc ->
       Map.put(acc, result, acc[result] ++ [s])
     end)
-    |> update_in([:ok], & List.flatten(&1))
-    |> update_in([:error], & List.flatten(&1))
+    |> update_in([:ok], &List.flatten(&1))
+    |> update_in([:error], &List.flatten(&1))
   end
 
   def error(path, input, msg) do
@@ -25,8 +25,8 @@ defmodule Norm.Conformer do
   end
 
   def error_to_msg(%{path: path, input: input, msg: msg}) do
-    path  = if path == [], do: nil, else: "in: " <> build_path(path)
-    val   = "val: #{format_val(input)}"
+    path = if path == [], do: nil, else: "in: " <> build_path(path)
+    val = "val: #{format_val(input)}"
     fails = "fails: #{msg}"
 
     [val, path, fails]
@@ -44,11 +44,10 @@ defmodule Norm.Conformer do
   defp format_val(msg) when is_binary(msg), do: "\"#{msg}\""
   defp format_val(msg) when is_boolean(msg), do: "#{msg}"
   defp format_val(msg) when is_atom(msg), do: ":#{msg}"
-  defp format_val(val) when is_map(val), do: inspect val
+  defp format_val(val) when is_map(val), do: inspect(val)
   defp format_val({:index, i}), do: "[#{i}]"
-  defp format_val(t) when is_tuple(t), do: "#{inspect t}"
+  defp format_val(t) when is_tuple(t), do: "#{inspect(t)}"
   defp format_val(msg), do: "#{msg}"
-
 
   defprotocol Conformable do
     @moduledoc false
@@ -80,7 +79,7 @@ defimpl Norm.Conformer.Conformable, for: Tuple do
   alias Norm.Conformer
   alias Norm.Conformer.Conformable
 
-  def conform(spec, input, path) when is_tuple(input) and (tuple_size(spec) != tuple_size(input)) do
+  def conform(spec, input, path) when is_tuple(input) and tuple_size(spec) != tuple_size(input) do
     {:error, [Conformer.error(path, input, "incorrect tuple size")]}
   end
 
@@ -90,7 +89,7 @@ defimpl Norm.Conformer.Conformable, for: Tuple do
       |> Tuple.to_list()
       |> Enum.with_index()
       |> Enum.map(fn {spec, i} -> Conformable.conform(spec, elem(input, i), path ++ [i]) end)
-      |> Conformer.group_results
+      |> Conformer.group_results()
 
     if Enum.any?(results.error) do
       {:error, results.error}
@@ -99,5 +98,3 @@ defimpl Norm.Conformer.Conformable, for: Tuple do
     end
   end
 end
-
-

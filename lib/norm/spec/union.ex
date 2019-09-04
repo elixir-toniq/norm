@@ -16,7 +16,7 @@ defmodule Norm.Spec.Union do
       result =
         specs
         |> Enum.map(fn spec -> Conformable.conform(spec, input, path) end)
-        |> Conformer.group_results
+        |> Conformer.group_results()
 
       if Enum.any?(result.ok) do
         {:ok, Enum.at(result.ok, 0)}
@@ -39,6 +39,7 @@ defmodule Norm.Spec.Union do
       end
 
       def to_gen(_, {:error, error}), do: {:error, error}
+
       def to_gen(spec, generators) do
         case Norm.Generatable.gen(spec) do
           {:ok, g} ->

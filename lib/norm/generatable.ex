@@ -22,8 +22,8 @@ if Code.ensure_loaded?(StreamData) do
         # The list we build is in reverse order so we need to reverse first
         generator =
           list
-          |> Enum.reverse
-          |> List.to_tuple
+          |> Enum.reverse()
+          |> List.to_tuple()
           |> StreamData.tuple()
 
         {:ok, generator}
@@ -31,6 +31,7 @@ if Code.ensure_loaded?(StreamData) do
     end
 
     def to_gen(_, {:error, error}), do: {:error, error}
+
     def to_gen(spec, generator) do
       with {:ok, g} <- Generatable.gen(spec) do
         [g | generator]
@@ -38,4 +39,3 @@ if Code.ensure_loaded?(StreamData) do
     end
   end
 end
-

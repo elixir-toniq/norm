@@ -49,4 +49,3 @@ defmodule Norm.Spec.And do
     end
   end
 end
-

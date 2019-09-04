@@ -8,11 +8,13 @@ defmodule Norm.SchemaTest do
 
     defstruct ~w|name email age|a
 
-    def s, do: schema(%__MODULE__{
-      name: spec(is_binary()),
-      email: spec(is_binary()),
-      age: spec(is_integer() and (& &1 >= 0))
-    })
+    def s,
+      do:
+        schema(%__MODULE__{
+          name: spec(is_binary()),
+          email: spec(is_binary()),
+          age: spec(is_integer() and (&(&1 >= 0)))
+        })
 
     def chris do
       %__MODULE__{name: "chris", email: "c@keathley.io", age: 31}
@@ -34,10 +36,11 @@ defmodule Norm.SchemaTest do
   end
 
   test "requires all of the keys specified in the schema" do
-    s = schema(%{
-      name: spec(is_binary()),
-      age: spec(is_integer()),
-    })
+    s =
+      schema(%{
+        name: spec(is_binary()),
+        age: spec(is_integer())
+      })
 
     assert %{name: "chris", age: 31} == conform!(%{name: "chris", age: 31}, s)
     assert {:error, errors} = conform(%{name: "chris"}, s)
@@ -57,10 +60,11 @@ defmodule Norm.SchemaTest do
 
   describe "generation" do
     test "works with maps" do
-      s = schema(%{
-        name: spec(is_binary()),
-        age: spec(is_integer())
-      })
+      s =
+        schema(%{
+          name: spec(is_binary()),
+          age: spec(is_integer())
+        })
 
       maps =
         s
@@ -76,9 +80,10 @@ defmodule Norm.SchemaTest do
     end
 
     test "returns errors if it contains unknown generators" do
-      s = schema(%{
-        age: spec(&(&1 > 0))
-      })
+      s =
+        schema(%{
+          age: spec(&(&1 > 0))
+        })
 
       assert_raise Norm.GeneratorError, "Unable to create a generator for: &(&1 > 0)", fn ->
         gen(s)
@@ -87,17 +92,18 @@ defmodule Norm.SchemaTest do
   end
 
   test "schemas can be composed with other specs" do
-    user_or_other = alt([user: User.s(), other: schema(%OtherUser{})])
+    user_or_other = alt(user: User.s(), other: schema(%OtherUser{}))
     user = User.chris()
     other = %OtherUser{}
 
     assert {:user, user} == conform!(user, user_or_other)
     assert {:other, other} == conform!(other, user_or_other)
     assert {:error, errors} = conform(%{}, user_or_other)
+
     assert errors == [
-      "val: %{} in: :user fails: Norm.SchemaTest.User",
-      "val: %{} in: :other fails: Norm.SchemaTest.OtherUser"
-    ]
+             "val: %{} in: :user fails: Norm.SchemaTest.User",
+             "val: %{} in: :other fails: Norm.SchemaTest.OtherUser"
+           ]
   end
 
   test "can have nested alts" do
@@ -107,25 +113,28 @@ defmodule Norm.SchemaTest do
     assert %{a: {:bool, false}} == conform!(%{a: false}, s)
     assert %{a: {:int, 123}} == conform!(%{a: 123}, s)
     assert {:error, errors} = conform(%{a: "test"}, s)
+
     assert errors == [
-      "val: \"test\" in: :a/:bool fails: is_boolean()",
-      "val: \"test\" in: :a/:int fails: is_integer()"
-    ]
+             "val: \"test\" in: :a/:bool fails: is_boolean()",
+             "val: \"test\" in: :a/:int fails: is_integer()"
+           ]
   end
 
   test "only returns specced keys" do
-    user_schema = schema(%{
-      name: spec(is_binary())
-    })
+    user_schema =
+      schema(%{
+        name: spec(is_binary())
+      })
 
     assert {:ok, %{name: "chris"}} == conform(%{name: "chris", age: 31}, user_schema)
   end
 
   test "works with string keys and atom keys" do
-    user = schema(%{
-      "name" => spec(is_binary()),
-      age: spec(is_integer())
-    })
+    user =
+      schema(%{
+        "name" => spec(is_binary()),
+        age: spec(is_integer())
+      })
 
     input = %{
       "name" => "chris",
@@ -134,10 +143,11 @@ defmodule Norm.SchemaTest do
 
     assert input == conform!(input, user)
     assert {:error, errors} = conform(%{"name" => 31, age: "chris"}, user)
+
     assert errors == [
-      "val: \"chris\" in: :age fails: is_integer()",
-      "val: 31 in: \"name\" fails: is_binary()"
-    ]
+             "val: \"chris\" in: :age fails: is_integer()",
+             "val: 31 in: \"name\" fails: is_binary()"
+           ]
   end
 
   describe "schema/1 with struct" do
@@ -145,14 +155,20 @@ defmodule Norm.SchemaTest do
       input = Map.from_struct(User.chris())
 
       assert {:error, errors} = conform(input, schema(%User{}))
-      assert errors == ["val: %{age: 31, email: \"c@keathley.io\", name: \"chris\"} fails: Norm.SchemaTest.User"]
+
+      assert errors == [
+               "val: %{age: 31, email: \"c@keathley.io\", name: \"chris\"} fails: Norm.SchemaTest.User"
+             ]
     end
 
     test "fails if the wrong struct is passed" do
       input = User.chris()
 
       assert {:error, errors} = conform(input, schema(%OtherUser{}))
-      assert errors == ["val: %Norm.SchemaTest.User{age: 31, email: \"c@keathley.io\", name: \"chris\"} fails: Norm.SchemaTest.OtherUser"]
+
+      assert errors == [
+               "val: %Norm.SchemaTest.User{age: 31, email: \"c@keathley.io\", name: \"chris\"} fails: Norm.SchemaTest.OtherUser"
+             ]
     end
 
     test "can create a schema from a struct" do
@@ -166,9 +182,12 @@ defmodule Norm.SchemaTest do
 
       assert input == conform!(input, User.s())
       assert {:error, errors} = conform(%User{name: :foo, age: "31", email: 42}, User.s())
-      assert errors == ["val: \"31\" in: :age fails: is_integer()",
-                        "val: 42 in: :email fails: is_binary()",
-                        "val: :foo in: :name fails: is_binary()"]
+
+      assert errors == [
+               "val: \"31\" in: :age fails: is_integer()",
+               "val: 42 in: :email fails: is_binary()",
+               "val: :foo in: :name fails: is_binary()"
+             ]
     end
 
     test "only checks the keys that have specs" do
@@ -181,7 +200,7 @@ defmodule Norm.SchemaTest do
     end
 
     property "can generate proper structs" do
-      check all user <- gen(User.s()) do
+      check all(user <- gen(User.s())) do
         assert match?(%User{}, user)
         assert is_integer(user.age) and user.age >= 0
         assert is_binary(user.name)
@@ -190,7 +209,7 @@ defmodule Norm.SchemaTest do
     end
 
     property "can generate structs with a subset of keys specified" do
-      check all user <- gen(schema(%User{age: spec(is_integer() and (& &1 > 0))})) do
+      check all(user <- gen(schema(%User{age: spec(is_integer() and (&(&1 > 0)))}))) do
         assert match?(%User{}, user)
         assert is_integer(user.age) and user.age >= 0
         assert is_nil(user.name)
@@ -199,4 +218,3 @@ defmodule Norm.SchemaTest do
     end
   end
 end
-

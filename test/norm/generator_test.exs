@@ -21,4 +21,3 @@ defmodule Norm.GeneratorTest do
     end
   end
 end
-
