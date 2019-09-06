@@ -76,7 +76,7 @@ defmodule Norm.Spec do
 
   if Code.ensure_loaded?(StreamData) do
     defimpl Norm.Generatable do
-      @gen_primitives [
+      @supported_primitives [
         :is_atom,
         :is_binary,
         :is_bitstring,
@@ -87,7 +87,7 @@ defmodule Norm.Spec do
 
       def gen(%{generator: gen, predicate: pred}) do
         predicate =
-          Enum.find(@gen_primitives, {:error, pred}, fn predicate ->
+          Enum.find(@supported_primitives, {:error, pred}, fn predicate ->
             gen == predicate
           end)
 
