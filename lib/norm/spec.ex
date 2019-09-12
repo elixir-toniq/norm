@@ -91,13 +91,15 @@ defmodule Norm.Spec do
             gen == predicate
           end)
 
-        stream_from_predicate(predicate)
+        generator_from_predicate(predicate)
       end
 
-      defp stream_from_predicate({:error, predicate}), do: {:error, predicate}
-      defp stream_from_predicate(:is_atom), do: {:ok, apply(StreamData, :atom, [:alphanumeric])}
+      defp generator_from_predicate({:error, predicate}), do: {:error, predicate}
 
-      defp stream_from_predicate(predicate) do
+      defp generator_from_predicate(:is_atom),
+        do: {:ok, apply(StreamData, :atom, [:alphanumeric])}
+
+      defp generator_from_predicate(predicate) do
         data_type =
           predicate
           |> Atom.to_string()
