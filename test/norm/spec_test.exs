@@ -108,4 +108,24 @@ defmodule Norm.SpecTest do
       end
     end
   end
+
+  describe "inspect" do
+    test "predicate" do
+      assert inspect(spec(is_integer())) == "#Norm.Spec<is_integer()>"
+    end
+
+    test "lambda" do
+      assert inspect(spec(&(&1 >= 21))) == "#Norm.Spec<&(&1 >= 21)>"
+    end
+
+    test "and" do
+      assert inspect(spec(is_integer() and (&(&1 >= 21)))) ==
+               "#Norm.Spec<is_integer() and &(&1 >= 21)>"
+    end
+
+    test "or" do
+      assert inspect(spec(is_integer() or is_float())) ==
+               "#Norm.Spec<is_integer() or is_float()>"
+    end
+  end
 end

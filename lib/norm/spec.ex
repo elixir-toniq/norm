@@ -129,4 +129,15 @@ defmodule Norm.Spec do
       %{path: path, input: input, msg: msg, at: nil}
     end
   end
+
+  @doc false
+  def __inspect__(spec) do
+    spec.predicate
+  end
+
+  defimpl Inspect do
+    def inspect(spec, _) do
+      Inspect.Algebra.concat(["#Norm.Spec<", spec.predicate, ">"])
+    end
+  end
 end
