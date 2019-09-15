@@ -160,5 +160,99 @@ defmodule NormTest do
       spec = map_of(spec(is_integer()), spec(is_atom()))
       assert %{1 => :foo, 2 => :bar} == conform!(%{1 => :foo, 2 => :bar}, spec)
     end
+
+    property "can be generated" do
+      check all m <- gen(map_of(spec(is_integer()), spec(is_atom()))) do
+        assert is_map(m)
+        for k <- Map.keys(m), do: assert is_integer(k)
+        for v <- Map.values(m), do: assert is_atom(v)
+      end
+    end
+  end
+
+  describe "coll_of/2" do
+    test "can spec collections" do
+      spec = coll_of(spec(is_atom()))
+      assert [:foo, :bar, :baz] == conform!([:foo, :bar, :baz], spec)
+      assert {:error, errors} = conform([:foo, 1, "test"], spec)
+      assert errors == [
+        "val: 1 in: 1 fails: is_atom()",
+        "val: \"test\" in: 2 fails: is_atom()"
+      ]
+    end
+
+    test "conforming returns the conformed values" do
+      spec = coll_of(schema(%{name: spec(is_binary())}))
+      input = [
+        %{name: "chris", age: 31, email: "c@keathley.io"},
+        %{name: "andra", age: 30}
+      ]
+
+      assert [%{name: "chris"}, %{name: "andra"}] == conform!(input, spec)
+
+      input = [
+        %{age: 31, email: "c@keathley.io"},
+        %{name: :andra, age: 30},
+      ]
+      assert {:error, errors} = conform(input, spec)
+      assert errors == [
+        "val: %{age: 31, email: \"c@keathley.io\"} in: 0/:name fails: :required",
+        "val: :andra in: 1/:name fails: is_binary()"
+      ]
+    end
+
+    test "can enforce distinct elements" do
+      spec = coll_of(spec(is_integer()), distinct: true)
+
+      assert {:error, errors} = conform([1,1,1], spec)
+      assert errors == ["val: [1, 1, 1] fails: distinct?"]
+    end
+
+    test "can enforce min and max counts" do
+      spec = coll_of(spec(is_integer()), min_count: 2, max_count: 3)
+      assert [1, 1] == conform!([1, 1], spec)
+      assert [1, 1, 1] == conform!([1, 1, 1], spec)
+      assert {:error, ["val: [1] fails: min_count: 2"]} == conform([1], spec)
+      assert {:error, ["val: [1, 1, 1, 1] fails: max_count: 3"]} == conform([1, 1, 1, 1], spec)
+
+      spec = coll_of(spec(is_integer()), min_count: 3, max_count: 3)
+      assert [1, 1, 1] == conform!([1, 1, 1], spec)
+    end
+
+    test "min count must be less than or equal to max count" do
+      assert_raise ArgumentError, fn ->
+        coll_of(spec(is_integer()), min_count: 3, max_count: 2)
+      end
+    end
+
+    test "can be used to spec keyword lists" do
+      opts = one_of([
+        {:name, spec(is_atom())},
+        {:timeout, spec(is_integer())}
+      ])
+      spec = coll_of(opts)
+      list = [name: :storage, timeout: 3_000]
+
+      assert list == conform!(list, spec)
+      assert {:error, _errors} = conform([{:foo, :bar} | list], spec)
+
+      assert list == conform!(list, coll_of(opts, [min_count: 2, distinct: true]))
+      assert {:error, errors} = conform([], coll_of(opts, [min_count: 2, distinct: true]))
+    end
+
+    property "can be generated" do
+      check all is <- gen(coll_of(spec(is_integer()))) do
+        for i <- is, do: assert is_integer(i)
+      end
+
+      check all is <- gen(coll_of(spec(is_integer()), min_count: 3, max_count: 6)) do
+        length = Enum.count(is)
+        assert 3 <= length and length <= 6
+      end
+
+      check all is <- gen(coll_of(spec(is_integer()), distinct: true)) do
+        assert Enum.uniq(is) == is
+      end
+    end
   end
 end
