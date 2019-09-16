@@ -548,7 +548,19 @@ defmodule Norm do
       iex> conform!([:a, :b, :c], coll_of(spec(is_atom())))
       [:a, :b, :c]
   """
+  @default_opts [
+    distinct: false,
+    min_count: 0,
+    max_count: :infinity,
+    into: [],
+  ]
+
   def coll_of(spec, opts \\ []) do
+    opts = Keyword.merge(@default_opts, opts)
+    if opts[:min_count] > opts[:max_count] do
+      raise ArgumentError, "min_count cannot be larger than max_count"
+    end
+
     Collection.new(spec, opts)
   end
 
@@ -561,8 +573,8 @@ defmodule Norm do
       %{a: 1, b: 2, c: 3}
   """
   def map_of(kpred, vpred, opts \\ []) do
-    opts = Keyword.merge(opts, kind: :map)
-    Collection.new({kpred, vpred}, opts)
+    opts = Keyword.merge(opts, into: %{})
+    coll_of({kpred, vpred}, opts)
   end
 
   # @doc ~S"""
