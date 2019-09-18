@@ -1,0 +1,13 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/elixir:1.9
+
+    working_directory: ~/repo
+    steps:
+      - checkout
+
+      - run: mix local.hex --force
+      - run: mix deps.get
+      - run: mix test

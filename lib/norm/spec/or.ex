@@ -35,4 +35,17 @@ defmodule Norm.Spec.Or do
       end
     end
   end
+
+  @doc false
+  def __inspect__(%{left: left, right: right}) do
+    left = left.__struct__.__inspect__(left)
+    right = right.__struct__.__inspect__(right)
+    Inspect.Algebra.concat([left, " or ", right])
+  end
+
+  defimpl Inspect do
+    def inspect(struct, _) do
+      Inspect.Algebra.concat(["#Norm.Spec<", @for.__inspect__(struct), ">"])
+    end
+  end
 end
