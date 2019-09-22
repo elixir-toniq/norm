@@ -58,6 +58,14 @@ defmodule Norm.SchemaTest do
     assert %{bool: false} == conform!(%{bool: false}, s)
   end
 
+  test "allows keys to have nil values" do
+    s = schema(%{foo: spec(is_nil())})
+
+    assert %{foo: nil} == conform!(%{foo: nil}, s)
+    assert {:error, errors} = conform(%{foo: 123}, s)
+    assert errors == ["val: 123 in: :foo fails: is_nil()"]
+  end
+
   describe "generation" do
     test "works with maps" do
       s =
