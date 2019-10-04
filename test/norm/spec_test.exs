@@ -11,13 +11,13 @@ defmodule Norm.SpecTest do
 
   describe "spec/1" do
     test "can compose specs with 'and'" do
-      can_drink = spec(is_integer() and (&(&1 >= 21)))
+      hex = spec(is_binary() and (&String.starts_with?(&1, "#")))
 
-      assert 21 == conform!(21, can_drink)
-      assert {:error, errors} = conform("21", can_drink)
-      assert errors == ["val: \"21\" fails: is_integer()"]
-      assert {:error, errors} = conform(20, can_drink)
-      assert errors == ["val: 20 fails: &(&1 >= 21)"]
+      assert "#000000" == conform!("#000000", hex)
+      assert {:error, errors} = conform(nil, hex)
+      assert errors == ["val: nil fails: is_binary()"]
+      assert {:error, errors} = conform("bad", hex)
+      assert errors == ["val: \"bad\" fails: &(String.starts_with?(&1, \"#\"))"]
     end
 
     test "'and' and 'or' can be chained" do
