@@ -22,3 +22,5 @@ erl_crash.dump
 # Ignore package tarball (built via "mix hex.build").
 norm-*.tar
 
+# Elixir Language Server (e.g. for VS Code users).
+/.elixir_ls

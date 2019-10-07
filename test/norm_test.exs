@@ -161,6 +161,24 @@ defmodule NormTest do
       assert %{1 => :foo, 2 => :bar} == conform!(%{1 => :foo, 2 => :bar}, spec)
     end
 
+    test "doesn't throw for non-enumerable inputs" do
+      spec = map_of(spec(is_integer()), spec(is_atom()))
+
+      assert {:error, errors} = conform("not-a-map!", spec)
+      assert errors == [
+        %{spec: "not enumerable", input: "not-a-map!", path: []}
+      ]
+    end
+
+    test "doesn't throw for list inputs" do
+      spec = map_of(spec(is_integer()), spec(is_atom()))
+
+      assert {:error, errors} = conform([1, 2, 3], spec)
+      assert errors == [
+        %{spec: "not a map", input: [1, 2, 3], path: []}
+      ]
+    end
+
     property "can be generated" do
       check all m <- gen(map_of(spec(is_integer()), spec(is_atom()))) do
         assert is_map(m)
@@ -178,6 +196,15 @@ defmodule NormTest do
       assert errors == [
         %{spec: "is_atom()", input: 1, path: [1]},
         %{spec: "is_atom()", input: "test", path: [2]}
+      ]
+    end
+
+    test "doesn't throw for non-enumerable inputs" do
+      spec = coll_of(spec(is_integer()))
+
+      assert {:error, errors} = conform("not-a-collection!", spec)
+      assert errors == [
+        %{spec: "not enumerable", input: "not-a-collection!", path: []}
       ]
     end
 
