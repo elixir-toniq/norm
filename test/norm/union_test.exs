@@ -18,7 +18,7 @@ defmodule Norm.UnionTest do
     end
 
     test "accepts nil if part of the union" do
-      union = one_of([nil, spec(is_binary())])
+      union = one_of([spec(is_nil()), spec(is_binary())])
 
       assert nil == conform!(nil, union)
       assert "foo" == conform!("foo", union)
