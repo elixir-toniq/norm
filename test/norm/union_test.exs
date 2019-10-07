@@ -16,6 +16,19 @@ defmodule Norm.UnionTest do
                "val: 123 fails: is_binary()"
              ]
     end
+
+    test "accepts nil if part of the union" do
+      union = one_of([nil, spec(is_binary())])
+
+      assert nil == conform!(nil, union)
+      assert "foo" == conform!("foo", union)
+      assert {:error, errors} = conform(42, union)
+
+      assert errors == [
+               "val: 42 fails: is_nil()",
+               "val: 42 fails: is_binary()"
+             ]
+    end
   end
 
   describe "generation" do
