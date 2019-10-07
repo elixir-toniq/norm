@@ -12,7 +12,9 @@ defmodule Norm.Spec.Collection do
     alias Norm.Conformer.Conformable
 
     def conform(%{spec: spec, opts: opts}, input, path) do
-      with :ok <- check_distinct(input, path, opts),
+      with :ok <- check_enumerable(input, path, opts),
+           :ok <- check_map_of(input, path, opts),
+           :ok <- check_distinct(input, path, opts),
            :ok <- check_counts(input, path, opts) do
         results =
           input
@@ -58,6 +60,29 @@ defmodule Norm.Spec.Collection do
         end
       else
         :ok
+      end
+    end
+
+    defp check_enumerable(input, path, _opts) do
+      if Enumerable.impl_for(input) == nil do
+        {:error, [Conformer.error(path, input, "not enumerable")]}
+      else
+        :ok
+      end
+  end
+
+    defp check_map_of(input, path, opts) do
+      cond do
+        # if coll_of was used, accept every kind of list
+        opts[:into] == [] ->
+          :ok
+
+        # in case of map_of, check the format of the enumerable
+        Enum.all?(input, &match?({_, _}, &1)) ->
+          :ok
+
+        true ->
+          {:error, [Conformer.error(path, input, "not a map")]}
       end
     end
   end
