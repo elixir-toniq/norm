@@ -23,16 +23,8 @@ defmodule Norm.Spec.And do
     alias Norm.Conformer.Conformable
 
     def conform(%{left: l, right: r}, input, path) do
-      errors =
-        [l, r]
-        |> Enum.map(fn spec -> Conformable.conform(spec, input, path) end)
-        |> Enum.filter(fn {result, _} -> result == :error end)
-        |> Enum.flat_map(fn {_, msg} -> msg end)
-
-      if Enum.any?(errors) do
-        {:error, errors}
-      else
-        {:ok, input}
+      with {:ok, _} <- Conformable.conform(l, input, path) do
+        Conformable.conform(r, input, path)
       end
     end
   end
