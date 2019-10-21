@@ -12,7 +12,7 @@ defmodule Norm do
   => 123
 
   conform!(-50, spec(is_integer() and &(&1 > 0)))
-  ** (Norm.MismatchError) val: -50 fails: &(&1 > 0)
+  ** (Norm.MismatchError) val: -50 spec: &(&1 > 0)
       (norm) lib/norm.ex:44: Norm.conform!/2
 
   user_schema = schema(%{
@@ -65,7 +65,7 @@ defmodule Norm do
   conform!(10, spec(greater?(5)))
   => 10
   conform!(3, spec(greater?(5)))
-  ** (Norm.MismatchError) val: 3 fails: greater?(5)
+  ** (Norm.MismatchError) val: 3 spec: greater?(5)
       (norm) lib/norm.ex:44: Norm.conform!/2
   ```
 
@@ -362,9 +362,9 @@ defmodule Norm do
       iex> conform(42, spec(&(&1 >= 0)))
       {:ok, 42}
       iex> conform(42, spec(&(&1 >= 100)))
-      {:error, ["val: 42 fails: &(&1 >= 100)"]}
+      {:error, [%{spec: "&(&1 >= 100)", input: 42, path: []}]}
       iex> conform("foo", spec(is_integer()))
-      {:error, ["val: \"foo\" fails: is_integer()"]}
+      {:error, [%{spec: "is_integer()", input: "foo", path: []}]}
   """
   def conform(input, spec) do
     Conformer.conform(spec, input)
@@ -461,13 +461,13 @@ defmodule Norm do
       iex> conform!(21, spec(is_integer() and &(&1 >= 21)))
       21
       iex> conform("21", spec(is_integer() and &(&1 >= 21)))
-      {:error, ["val: \"21\" fails: is_integer()"]}
+      {:error, [%{spec: "is_integer()", input: "21", path: []}]}
       iex> conform!(:foo, spec(is_atom() or is_binary()))
       :foo
       iex> conform!("foo", spec(is_atom() or is_binary()))
       "foo"
       iex> conform(21, spec(is_atom() or is_binary()))
-      {:error, ["val: 21 fails: is_atom()", "val: 21 fails: is_binary()"]}
+      {:error, [%{spec: "is_atom()", input: 21, path: []}, %{spec: "is_binary()", input: 21, path: []}]}
   """
   defmacro spec(predicate) do
     spec = Spec.build(predicate)
@@ -506,7 +506,7 @@ defmodule Norm do
       iex> conform!("foo", alt(num: spec(is_integer()), str: spec(is_binary())))
       {:str, "foo"}
       iex> conform(true, alt(num: spec(is_integer()), str: spec(is_binary())))
-      {:error, ["val: true in: :num fails: is_integer()", "val: true in: :str fails: is_binary()"]}
+      {:error, [%{spec: "is_integer()", input: true, path: [:num]}, %{spec: "is_binary()", input: true, path: [:str]}]}
   """
   def alt(specs) when is_list(specs) do
     %Alt{specs: specs}
@@ -585,11 +585,11 @@ defmodule Norm do
   # iex> conform!([31, "Chris"], cat(age: integer?(), name: string?()))
   # [age: 31, name: "Chris"]
   # iex> conform([true, "Chris"], cat(age: integer?(), name: string?()))
-  # {:error, ["in: [0] at: :age val: true fails: integer?()"]}
+  # {:error, ["in: [0] at: :age val: true spec: integer?()"]}
   # iex> conform([31, :chris], cat(age: integer?(), name: string?()))
-  # {:error, ["in: [1] at: :name val: :chris fails: string?()"]}
+  # {:error, ["in: [1] at: :name val: :chris spec: string?()"]}
   # iex> conform([31], cat(age: integer?(), name: string?()))
-  # {:error, ["in: [1] at: :name val: nil fails: Insufficient input"]}
+  # {:error, ["in: [1] at: :name val: nil spec: Insufficient input"]}
   # """
   # def cat(opts) do
   #   fn path, input ->

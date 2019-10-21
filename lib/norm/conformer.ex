@@ -4,11 +4,7 @@ defmodule Norm.Conformer do
   # conformable types
 
   def conform(spec, input) do
-    # If we get errors then we should convert them to messages. Otherwise
-    # we just let good results fall through.
-    with {:error, errors} <- Norm.Conformer.Conformable.conform(spec, input, []) do
-      {:error, Enum.map(errors, &error_to_msg/1)}
-    end
+    Norm.Conformer.Conformable.conform(spec, input, [])
   end
 
   def group_results(results) do
@@ -21,10 +17,10 @@ defmodule Norm.Conformer do
   end
 
   def error(path, input, msg) do
-    %{path: path, input: input, msg: msg, at: nil}
+    %{path: path, input: input, spec: msg}
   end
 
-  def error_to_msg(%{path: path, input: input, msg: msg}) do
+  def error_to_msg(%{path: path, input: input, spec: msg}) do
     path = if path == [], do: nil, else: "in: " <> build_path(path)
     val = "val: #{format_val(input)}"
     fails = "fails: #{msg}"
