@@ -18,7 +18,7 @@ defmodule Norm.Spec.Union do
         |> Enum.map(fn spec -> Conformable.conform(spec, input, path) end)
         |> Conformer.group_results()
 
-      if Enum.any?(result.ok) do
+      if result.ok != [] do
         {:ok, Enum.at(result.ok, 0)}
       else
         {:error, List.flatten(result.error)}
