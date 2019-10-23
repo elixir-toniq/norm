@@ -12,9 +12,9 @@ defmodule NormTest do
     test "can match atoms" do
       assert :ok == conform!(:ok, :ok)
       assert {:error, errors} = conform("foo", :ok)
-      assert errors == ["val: \"foo\" fails: is not an atom."]
+      assert errors == [%{spec: "is not an atom.", input: "foo", path: []}]
       assert {:error, errors} = conform(:mismatch, :ok)
-      assert errors == ["val: :mismatch fails: == :ok"]
+      assert errors == [%{spec: "== :ok", input: :mismatch, path: []}]
     end
 
     test "can match patterns of tuples" do
@@ -30,18 +30,18 @@ defmodule NormTest do
       assert {:error, errors} = conform({1, :bar, "foo"}, three)
 
       assert errors == [
-               "val: :bar in: 1 fails: is_integer()",
-               "val: \"foo\" in: 2 fails: is_integer()"
-             ]
+        %{spec: "is_integer()", input: :bar, path: [1]},
+        %{spec: "is_integer()", input: "foo", path: [2]}
+      ]
 
       assert {:error, errors} = conform({:ok, "foo"}, ok)
-      assert errors == ["val: \"foo\" in: 1 fails: is_integer()"]
+      assert errors == [%{spec: "is_integer()", input: "foo", path: [1]}]
 
       assert {:error, errors} = conform({:ok, "foo", 123}, ok)
-      assert errors == ["val: {:ok, \"foo\", 123} fails: incorrect tuple size"]
+      assert errors == [%{spec: "incorrect tuple size", input: {:ok, "foo", 123}, path: []}]
 
       assert {:error, errors} = conform({:ok, 123, "foo"}, ok)
-      assert errors == ["val: {:ok, 123, \"foo\"} fails: incorrect tuple size"]
+      assert errors == [%{spec: "incorrect tuple size", input: {:ok, 123, "foo"}, path: []}]
     end
 
     test "tuples can be composed with schema's and selections" do
@@ -50,7 +50,7 @@ defmodule NormTest do
 
       assert {:ok, %{name: "chris"}} == conform!({:ok, %{name: "chris", age: 31}}, ok)
       assert {:error, errors} = conform({:ok, %{age: 31}}, ok)
-      assert errors == ["val: %{age: 31} in: 1/:name fails: :required"]
+      assert errors == [%{spec: ":required", input: %{age: 31}, path: [1, :name]}]
     end
 
     @tag :skip
@@ -134,9 +134,9 @@ defmodule NormTest do
       assert {:error, errors} = conform(%{name: :alice}, spec)
 
       assert errors == [
-               "val: :alice in: :a/:name fails: is_binary()",
-               "val: %{name: :alice} in: :b fails: is_binary()"
-             ]
+        %{spec: "is_binary()", input: :alice, path: [:a, :name]},
+        %{spec: "is_binary()", input: %{name: :alice}, path: [:b]}
+      ]
     end
 
     test "can generate data" do
@@ -176,8 +176,8 @@ defmodule NormTest do
       assert [:foo, :bar, :baz] == conform!([:foo, :bar, :baz], spec)
       assert {:error, errors} = conform([:foo, 1, "test"], spec)
       assert errors == [
-        "val: 1 in: 1 fails: is_atom()",
-        "val: \"test\" in: 2 fails: is_atom()"
+        %{spec: "is_atom()", input: 1, path: [1]},
+        %{spec: "is_atom()", input: "test", path: [2]}
       ]
     end
 
@@ -196,8 +196,8 @@ defmodule NormTest do
       ]
       assert {:error, errors} = conform(input, spec)
       assert errors == [
-        "val: %{age: 31, email: \"c@keathley.io\"} in: 0/:name fails: :required",
-        "val: :andra in: 1/:name fails: is_binary()"
+        %{spec: ":required", input: %{age: 31, email: "c@keathley.io"}, path: [0, :name]},
+        %{spec: "is_binary()", input: :andra, path: [1, :name]}
       ]
     end
 
@@ -205,15 +205,15 @@ defmodule NormTest do
       spec = coll_of(spec(is_integer()), distinct: true)
 
       assert {:error, errors} = conform([1,1,1], spec)
-      assert errors == ["val: [1, 1, 1] fails: distinct?"]
+      assert errors == [%{spec: "distinct?", input: [1, 1, 1], path: []}]
     end
 
     test "can enforce min and max counts" do
       spec = coll_of(spec(is_integer()), min_count: 2, max_count: 3)
       assert [1, 1] == conform!([1, 1], spec)
       assert [1, 1, 1] == conform!([1, 1, 1], spec)
-      assert {:error, ["val: [1] fails: min_count: 2"]} == conform([1], spec)
-      assert {:error, ["val: [1, 1, 1, 1] fails: max_count: 3"]} == conform([1, 1, 1, 1], spec)
+      assert {:error, [%{spec: "min_count: 2", input: [1], path: []}]} == conform([1], spec)
+      assert {:error, [%{spec: "max_count: 3", input: [1, 1, 1, 1], path: []}]} == conform([1, 1, 1, 1], spec)
 
       spec = coll_of(spec(is_integer()), min_count: 3, max_count: 3)
       assert [1, 1, 1] == conform!([1, 1, 1], spec)

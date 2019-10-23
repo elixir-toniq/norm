@@ -44,11 +44,11 @@ defmodule Norm.SchemaTest do
 
     assert %{name: "chris", age: 31} == conform!(%{name: "chris", age: 31}, s)
     assert {:error, errors} = conform(%{name: "chris"}, s)
-    assert errors == ["val: %{name: \"chris\"} in: :age fails: :required"]
+    assert errors == [%{spec: ":required", input: %{name: "chris"}, path: [:age]}]
 
     user = schema(%{user: s})
     assert {:error, errors} = conform(%{user: %{age: 31}}, user)
-    assert errors == ["val: %{age: 31} in: :user/:name fails: :required"]
+    assert errors == [%{spec: ":required", input: %{age: 31}, path: [:user, :name]}]
   end
 
   test "works with boolean values" do
@@ -63,7 +63,7 @@ defmodule Norm.SchemaTest do
 
     assert %{foo: nil} == conform!(%{foo: nil}, s)
     assert {:error, errors} = conform(%{foo: 123}, s)
-    assert errors == ["val: 123 in: :foo fails: is_nil()"]
+    assert errors == [%{spec: "is_nil()", input: 123, path: [:foo]}]
   end
 
   describe "generation" do
@@ -109,9 +109,9 @@ defmodule Norm.SchemaTest do
     assert {:error, errors} = conform(%{}, user_or_other)
 
     assert errors == [
-             "val: %{} in: :user fails: Norm.SchemaTest.User",
-             "val: %{} in: :other fails: Norm.SchemaTest.OtherUser"
-           ]
+      %{spec: "Norm.SchemaTest.User", input: %{}, path: [:user]},
+      %{spec: "Norm.SchemaTest.OtherUser", input: %{}, path: [:other]}
+    ]
   end
 
   test "can have nested alts" do
@@ -123,9 +123,9 @@ defmodule Norm.SchemaTest do
     assert {:error, errors} = conform(%{a: "test"}, s)
 
     assert errors == [
-             "val: \"test\" in: :a/:bool fails: is_boolean()",
-             "val: \"test\" in: :a/:int fails: is_integer()"
-           ]
+      %{spec: "is_boolean()", input: "test", path: [:a, :bool]},
+      %{spec: "is_integer()", input: "test", path: [:a, :int]}
+    ]
   end
 
   test "only returns specced keys" do
@@ -153,9 +153,9 @@ defmodule Norm.SchemaTest do
     assert {:error, errors} = conform(%{"name" => 31, age: "chris"}, user)
 
     assert errors == [
-             "val: \"chris\" in: :age fails: is_integer()",
-             "val: 31 in: \"name\" fails: is_binary()"
-           ]
+      %{spec: "is_integer()", input: "chris", path: [:age]},
+      %{spec: "is_binary()", input: 31, path: ["name"]}
+    ]
   end
 
   describe "schema/1 with struct" do
@@ -165,7 +165,7 @@ defmodule Norm.SchemaTest do
       assert {:error, errors} = conform(input, schema(%User{}))
 
       assert errors == [
-               "val: %{age: 31, email: \"c@keathley.io\", name: \"chris\"} fails: Norm.SchemaTest.User"
+        %{spec: "Norm.SchemaTest.User", input: %{age: 31, email: "c@keathley.io", name: "chris"}, path: []}
              ]
     end
 
@@ -175,7 +175,7 @@ defmodule Norm.SchemaTest do
       assert {:error, errors} = conform(input, schema(%OtherUser{}))
 
       assert errors == [
-               "val: %Norm.SchemaTest.User{age: 31, email: \"c@keathley.io\", name: \"chris\"} fails: Norm.SchemaTest.OtherUser"
+        %{spec: "Norm.SchemaTest.OtherUser", input: %Norm.SchemaTest.User{age: 31, email: "c@keathley.io", name: "chris"}, path: []}
              ]
     end
 
@@ -192,10 +192,10 @@ defmodule Norm.SchemaTest do
       assert {:error, errors} = conform(%User{name: :foo, age: "31", email: 42}, User.s())
 
       assert errors == [
-               "val: \"31\" in: :age fails: is_integer()",
-               "val: 42 in: :email fails: is_binary()",
-               "val: :foo in: :name fails: is_binary()"
-             ]
+        %{spec: "is_integer()", input: "31", path: [:age]},
+        %{spec: "is_binary()", input: 42, path: [:email]},
+        %{spec: "is_binary()", input: :foo, path: [:name]}
+      ]
     end
 
     test "only checks the keys that have specs" do
@@ -204,7 +204,7 @@ defmodule Norm.SchemaTest do
 
       assert input == conform!(input, spec)
       assert {:error, errors} = conform(%User{name: 23}, spec)
-      assert errors == ["val: 23 in: :name fails: is_binary()"]
+      assert errors == [%{spec: "is_binary()", input: 23, path: [:name]}]
     end
 
     property "can generate proper structs" do

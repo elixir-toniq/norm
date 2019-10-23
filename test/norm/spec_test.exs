@@ -15,9 +15,9 @@ defmodule Norm.SpecTest do
 
       assert "#000000" == conform!("#000000", hex)
       assert {:error, errors} = conform(nil, hex)
-      assert errors == ["val: nil fails: is_binary()"]
+      assert errors == [%{spec: "is_binary()", input: nil, path: []}]
       assert {:error, errors} = conform("bad", hex)
-      assert errors == ["val: \"bad\" fails: &(String.starts_with?(&1, \"#\"))"]
+      assert errors == [%{spec: "&(String.starts_with?(&1, \"#\"))", input: "bad", path: []}]
     end
 
     test "'and' and 'or' can be chained" do
@@ -33,15 +33,15 @@ defmodule Norm.SpecTest do
 
       evens = spec(is_integer() and Integer.is_even())
       assert 2 == conform!(2, evens)
-      assert {:error, ["val: 3 fails: Integer.is_even()"]} == conform(3, evens)
+      assert {:error, [%{spec: "Integer.is_even()", input: 3, path: []}]} == conform(3, evens)
 
       hello = spec(Foo.hello?())
       assert "hello" == conform!("hello", hello)
-      assert {:error, ["val: \"foo\" fails: Foo.hello?()"]} == conform("foo", hello)
+      assert {:error, [%{spec: "Foo.hello?()", input: "foo", path: []}]} == conform("foo", hello)
 
       foo = spec(Foo.match?("foo"))
       assert "foo" == conform!("foo", foo)
-      assert {:error, ["val: \"bar\" fails: Foo.match?(\"foo\")"]} == conform("bar", foo)
+      assert {:error, [%{spec: "Foo.match?(\"foo\")", input: "bar", path: []}]} == conform("bar", foo)
     end
   end
 

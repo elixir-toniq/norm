@@ -12,9 +12,9 @@ defmodule Norm.UnionTest do
       assert {:error, errors} = conform(123, union)
 
       assert errors == [
-               "val: 123 fails: is not an atom.",
-               "val: 123 fails: is_binary()"
-             ]
+        %{spec: "is not an atom.", input: 123, path: []},
+        %{spec: "is_binary()", input: 123, path: []}
+      ]
     end
 
     test "accepts nil if part of the union" do
@@ -25,9 +25,9 @@ defmodule Norm.UnionTest do
       assert {:error, errors} = conform(42, union)
 
       assert errors == [
-               "val: 42 fails: is_nil()",
-               "val: 42 fails: is_binary()"
-             ]
+        %{spec: "is_nil()", input: 42, path: []},
+        %{spec: "is_binary()", input: 42, path: []}
+      ]
     end
   end
 

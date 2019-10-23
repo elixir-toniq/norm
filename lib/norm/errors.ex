@@ -2,7 +2,10 @@ defmodule Norm.MismatchError do
   defexception [:message]
 
   def exception(errors) do
-    msg = Enum.join(errors, "\n")
+    msg =
+      errors
+      |> Enum.map(&Norm.Conformer.error_to_msg/1)
+      |> Enum.join("\n")
 
     %__MODULE__{message: "Could not conform input:\n" <> msg}
   end

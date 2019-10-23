@@ -24,7 +24,7 @@ defmodule Norm.SelectionTest do
                conform!(@input, selection(user_schema(), [:age, :name]))
 
       assert {:error, errors} = conform(%{age: -100}, selection(user_schema(), [:age]))
-      assert errors == ["val: -100 in: :age fails: &(&1 > 0)"]
+      assert errors == [%{spec: "&(&1 > 0)", input: -100, path: [:age]}]
     end
 
     test "works with nested schemas" do
@@ -33,11 +33,11 @@ defmodule Norm.SelectionTest do
 
       assert %{user: %{age: 31}} == conform!(%{user: %{age: 31}}, selection)
       assert {:error, errors} = conform(%{user: %{age: -100}}, selection)
-      assert errors == ["val: -100 in: :user/:age fails: &(&1 > 0)"]
+      assert errors == [%{spec: "&(&1 > 0)", input: -100, path: [:user, :age]}]
       assert {:error, errors} = conform(%{user: %{name: "chris"}}, selection)
-      assert errors == ["val: %{name: \"chris\"} in: :user/:age fails: :required"]
+      assert errors == [%{spec: ":required", input: %{name: "chris"}, path: [:user, :age]}]
       assert {:error, errors} = conform(%{fauxuser: %{age: 31}}, selection)
-      assert errors == ["val: %{fauxuser: %{age: 31}} in: :user fails: :required"]
+      assert errors == [%{spec: ":required", input: %{fauxuser: %{age: 31}}, path: [:user]}]
     end
 
     test "errors if there are keys that aren't specified in a schema" do

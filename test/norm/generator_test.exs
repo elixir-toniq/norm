@@ -9,7 +9,7 @@ defmodule Norm.GeneratorTest do
       spec = Generator.new(spec(is_integer()), :null)
 
       assert 123 == conform!(123, spec)
-      assert {:error, ["val: \"foo\" fails: is_integer()"]} = conform("foo", spec)
+      assert {:error, [%{spec: "is_integer()", input: "foo", path: []}]} = conform("foo", spec)
     end
 
     test "raises when generating" do

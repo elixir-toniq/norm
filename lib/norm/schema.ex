@@ -34,10 +34,11 @@ defmodule Norm.Schema do
   end
 
   defimpl Norm.Conformer.Conformable do
+    alias Norm.Conformer
     alias Norm.Conformer.Conformable
 
     def conform(_, input, path) when not is_map(input) do
-      {:error, [error(path, input, "not a map")]}
+      {:error, [Conformer.error(path, input, "not a map")]}
     end
 
     def conform(%{specs: specs, struct: target}, input, path) when not is_nil(target) do
@@ -52,7 +53,7 @@ defmodule Norm.Schema do
           |> Atom.to_string()
           |> String.replace("Elixir.", "")
 
-        {:error, [error(path, input, "#{short_name}")]}
+        {:error, [Conformer.error(path, input, "#{short_name}")]}
       end
     end
 
@@ -82,7 +83,7 @@ defmodule Norm.Schema do
     defp check_spec({key, nil}, input, path) do
       case Map.has_key?(input, key) do
         false ->
-          {key, {:error, [error(path ++ [key], input, ":required")]}}
+          {key, {:error, [Conformer.error(path ++ [key], input, ":required")]}}
 
         true ->
           {key, {:ok, Map.get(input, key)}}
@@ -92,16 +93,12 @@ defmodule Norm.Schema do
     defp check_spec({key, spec}, input, path) do
       case Map.has_key?(input, key) do
         false ->
-          {key, {:error, [error(path ++ [key], input, ":required")]}}
+          {key, {:error, [Conformer.error(path ++ [key], input, ":required")]}}
 
         true ->
           val = Map.get(input, key)
           {key, Conformable.conform(spec, val, path ++ [key])}
       end
-    end
-
-    defp error(path, input, msg) do
-      %{path: path, input: input, msg: msg, at: nil}
     end
   end
 

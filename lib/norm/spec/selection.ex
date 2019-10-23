@@ -66,6 +66,7 @@ defmodule Norm.Spec.Selection do
   end
 
   defimpl Norm.Conformer.Conformable do
+    alias Norm.Conformer
     alias Norm.Conformer.Conformable
 
     def conform(%{subset: subset}, input, path) do
@@ -77,7 +78,7 @@ defmodule Norm.Spec.Selection do
           if val do
             {key, Conformable.conform(spec, val, path ++ [key])}
           else
-            {key, {:error, [error(path ++ [key], input, ":required")]}}
+            {key, {:error, [Conformer.error(path ++ [key], input, ":required")]}}
           end
         end)
         |> Enum.reduce(%{ok: [], error: []}, fn {key, {result, r}}, acc ->
@@ -93,10 +94,6 @@ defmodule Norm.Spec.Selection do
       else
         {:ok, Enum.into(results.ok, %{})}
       end
-    end
-
-    defp error(path, input, msg) do
-      %{path: path, input: input, msg: msg, at: nil}
     end
   end
 end

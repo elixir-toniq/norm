@@ -118,15 +118,11 @@ defmodule Norm.Spec do
           {:ok, input}
 
         false ->
-          {:error, [error(path, input, pred)]}
+          {:error, [Norm.Conformer.error(path, input, pred)]}
 
         _ ->
           raise ArgumentError, "Predicates must return a boolean value"
       end
-    end
-
-    def error(path, input, msg) do
-      %{path: path, input: input, msg: msg, at: nil}
     end
   end
 
