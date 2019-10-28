@@ -40,7 +40,7 @@ jobs:
           paths: ["_build"]
 
 
-   credo:
+  credo:
     docker:
       - image: circleci/elixir:1.9
         environment:
