@@ -319,7 +319,7 @@ gen(spec(is_binary() and &(&1 =~ ~r/foobarbaz/)))
 
 Norm can determine the generators to use however its incredibly unlikely
 that Norm will be able to generate data that matches the filter. After 25
-consequtive unseccesful attempts to generate a good value Norm (StreamData
+consecutive unseccesful attempts to generate a good value Norm (StreamData
 under the hood) will return an error. In these scenarios we can create
 a custom generator.
 
