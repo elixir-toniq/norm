@@ -226,7 +226,7 @@ defmodule Norm do
   Along with validating that data conforms to a given specification, Norm
   can also use specificiations to generate examples of good data. These
   examples can then be used for property based testing, local development,
-  seeding databases, or any other usecase.
+  seeding databases, or any other use case.
 
   ```elixir
   user_schema = schema(%{
