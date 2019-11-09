@@ -166,7 +166,7 @@ defmodule Norm do
   ### Selections
 
   You may have noticed that there's no way to specify optional keys in
-  a schema. This may seem like an oversite but its actually an intentional
+  a schema. This may seem like an oversight but its actually an intentional
   design decision. Whether a key should be present in a schema is determined
   by the call site and not by the schema itself. For instance think about
   the assigns in a plug conn. When are the assigns optional? It depends on
