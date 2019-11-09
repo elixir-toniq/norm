@@ -151,7 +151,7 @@ defmodule User do
   def s, do: schema(%__MODULE__{
       name: spec(is_binary()),
       age: spec(is_integer())
-    }
+    })
 end
 ```
 
