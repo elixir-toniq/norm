@@ -179,7 +179,7 @@ Atom and string keys are matched explicitly and there is no casting that
 occurs when conforming values. If you need to match on string keys you
 should specify your schema with string keys.
 
-Schema's accomodate growth by disregarding any unspecified keys in the input map.
+Schemas accomodate growth by disregarding any unspecified keys in the input map.
 This allows callers to start sending new data over time without coordination
 with the consuming function.
 
@@ -192,7 +192,7 @@ by the call site and not by the schema itself. For instance think about
 the assigns in a plug conn. When are the assigns optional? It depends on
 where you are in the pipeline.
 
-Schema's also force all keys to match at all times. This is generally
+Schemas also force all keys to match at all times. This is generally
 useful as it limits your ability to introduce errors. But it also limits
 schema growth and turns changes that should be non-breaking into breaking
 changes.
