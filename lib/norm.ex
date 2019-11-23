@@ -131,7 +131,7 @@ defmodule Norm do
     def s, do: schema(%__MODULE__{
         name: spec(is_binary()),
         age: spec(is_integer())
-      }
+      })
   end
   ```
 
@@ -166,7 +166,7 @@ defmodule Norm do
   ### Selections
 
   You may have noticed that there's no way to specify optional keys in
-  a schema. This may seem like an oversite but its actually an intentional
+  a schema. This may seem like an oversight but its actually an intentional
   design decision. Whether a key should be present in a schema is determined
   by the call site and not by the schema itself. For instance think about
   the assigns in a plug conn. When are the assigns optional? It depends on
@@ -226,7 +226,7 @@ defmodule Norm do
   Along with validating that data conforms to a given specification, Norm
   can also use specificiations to generate examples of good data. These
   examples can then be used for property based testing, local development,
-  seeding databases, or any other usecase.
+  seeding databases, or any other use case.
 
   ```elixir
   user_schema = schema(%{
@@ -299,7 +299,7 @@ defmodule Norm do
 
   Norm can determine the generators to use however its incredibly unlikely
   that Norm will be able to generate data that matches the filter. After 25
-  consequtive unseccesful attempts to generate a good value Norm (StreamData
+  consecutive unseccessful attempts to generate a good value Norm (StreamData
   under the hood) will return an error. In these scenarios we can create
   a custom generator.
 
