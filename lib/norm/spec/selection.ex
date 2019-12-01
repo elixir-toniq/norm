@@ -51,20 +51,27 @@ defmodule Norm.Spec.Selection do
   defp validate_selectors!([_key | rest]), do: validate_selectors!(rest)
   defp validate_selectors!(other), do: raise ArgumentError, "select expects a list of keys but received: #{inspect other}"
 
-  defp assert_spec!(schema, key) do
+  defp assert_spec!(%Schema{}=schema, key) do
     case Schema.spec(schema, key) do
       nil -> raise SpecError, {:selection, key, schema}
       spec -> spec
     end
   end
+  defp assert_spec!(%__MODULE__{}, _key) do
+    # In the future we might support this and allow users to overwrite internal
+    # selections. But for now its safer to forbid this.
+    raise ArgumentError, """
+    Attempting to specify a selection on top of another selection is
+    not allowed.
+    """
+  end
+  defp assert_spec!(other, _key) do
+    raise ArgumentError, "Expected a schema and got: #{inspect other}"
+  end
 
   defimpl Norm.Conformer.Conformable do
     alias Norm.Conformer
     alias Norm.Conformer.Conformable
-
-    # def conform(_, input, path) when not is_map(input) do
-    #   {:error, [Conformer.error(path, input, "not a map")]}
-    # end
 
     def conform(%{required: required, schema: schema}, input, path) do
       with {:ok, conformed} <- Conformable.conform(schema, input, path) do

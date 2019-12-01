@@ -512,7 +512,8 @@ defmodule Norm do
   in the selection are still considered optional. Selections, like schemas,
   are open and allow unspecied keys to be passed through. If no selectors are
   provided then `selection` defaults to `:all` and recursively marks all keys in
-  all schema's as required.
+  all nested schema's. If the schema includes internal selections these selections
+  will not be overwritten.
 
   ## Examples
 

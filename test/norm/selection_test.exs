@@ -37,6 +37,25 @@ defmodule Norm.SelectionTest do
       assert errors == [%{spec: ":required", input: %{fauxuser: %{age: 31}}, path: [:user]}]
     end
 
+    test "works with nested selections"  do
+      user_with_name = schema(%{user: selection(user_schema(), [:name])})
+      input = %{name: "chris"}
+      assert %{user: input} == conform!(%{user: input}, selection(user_with_name))
+
+      assert_raise ArgumentError, fn ->
+        user = schema(%{name: spec(is_binary()), age: spec(is_integer())})
+        required_user = selection(user)
+        selection(schema(%{user: required_user}), [user: [:name]])
+      end
+    end
+
+    test "returns an error if a non map input is given" do
+      assert {:error, errors} = conform(123, selection(user_schema()))
+      assert errors == [
+        %{input: 123, path: [], spec: "not a map"}
+      ]
+    end
+
     test "if no keys are selected all keys are enforced recursively" do
       assert valid?(@input, selection(user_schema()))
       refute valid?(%{}, selection(user_schema()))
