@@ -2,38 +2,115 @@ defmodule Norm.Spec.Selection do
   @moduledoc false
   # Provides the definition for selections
 
-  defstruct subset: nil
+  defstruct required: [], schema: nil
 
   alias Norm.Schema
   alias Norm.SpecError
 
-  def new(schema, path) do
-    select(schema, path, %{})
+  def new(schema, selectors) do
+    # We're going to front load some work so that we can ensure that people are
+    # requiring keys that actually exist in the schema and so that we can make
+    # it easier to conform in the future.
+    # select(schema, path, %{})
+    case selectors do
+      :all ->
+        selectors = build_all_selectors(schema)
+        select(selectors, schema)
+
+      _ ->
+        validate_selectors!(selectors)
+        select(selectors, schema)
+    end
   end
 
-  defp select(_, [], selection), do: %__MODULE__{subset: selection}
-
-  defp select(schema, [selector | rest], selection) do
+  def select(selectors, schema, required \\ [])
+  def select([], schema, required), do: %__MODULE__{schema: schema, required: required}
+  def select([selector | rest], schema, required) do
     case selector do
-      {key, inner} ->
-        case Schema.spec(schema, key) do
-          nil ->
-            raise SpecError, {:selection, key, schema}
-
-          inner_schema ->
-            selection = Map.put(selection, key, select(inner_schema, inner, %{}))
-            select(schema, rest, selection)
-        end
+      {key, inner_keys} ->
+        inner_schema = assert_spec!(schema, key)
+        selection = select(inner_keys, inner_schema)
+        select(rest, schema, [{key, selection} | required])
 
       key ->
-        case Schema.spec(schema, key) do
-          nil ->
-            raise SpecError, {:selection, key, schema}
+        _ = assert_spec!(schema, key)
+        select(rest, schema, [key | required])
+    end
+  end
 
-          spec ->
-            new_selection = Map.put(selection, key, spec)
-            select(schema, rest, new_selection)
+  defp build_all_selectors(schema) do
+    schema.specs
+    |> Enum.map(fn
+      {name, %Schema{}=inner_schema} -> {name, build_all_selectors(inner_schema)}
+      {name, _} -> name
+    end)
+  end
+
+  defp validate_selectors!([]), do: true
+  defp validate_selectors!([{_key, inner} | rest]), do: validate_selectors!(inner) and validate_selectors!(rest)
+  defp validate_selectors!([_key | rest]), do: validate_selectors!(rest)
+  defp validate_selectors!(other), do: raise ArgumentError, "select expects a list of keys but received: #{inspect other}"
+
+  defp assert_spec!(schema, key) do
+    case Schema.spec(schema, key) do
+      nil -> raise SpecError, {:selection, key, schema}
+      spec -> spec
+    end
+  end
+
+  defimpl Norm.Conformer.Conformable do
+    alias Norm.Conformer
+    alias Norm.Conformer.Conformable
+
+    # def conform(_, input, path) when not is_map(input) do
+    #   {:error, [Conformer.error(path, input, "not a map")]}
+    # end
+
+    def conform(%{required: required, schema: schema}, input, path) do
+      with {:ok, conformed} <- Conformable.conform(schema, input, path) do
+        errors = ensure_keys(required, conformed, path, [])
+
+        if Enum.any?(errors) do
+          errors =
+            errors
+            |> Enum.flat_map(fn {_, errors} -> errors end)
+
+          {:error, errors}
+        else
+          # We can just return the conformed values here because we know that
+          # everything is in there.
+          {:ok, conformed}
         end
+      end
+    end
+
+    defp ensure_keys([], _conformed, _path, errors), do: errors
+    defp ensure_keys([{key, inner} | rest], conformed, path, errors) do
+      case ensure_key(key, conformed, path) do
+        :ok ->
+          inner_errors = ensure_keys(inner.required, conformed[key], path ++ [key], errors)
+          ensure_keys(rest, conformed, path, errors ++ inner_errors)
+
+        error ->
+          ensure_keys(rest, conformed, path, [error | errors])
+      end
+    end
+    defp ensure_keys([key | rest], conformed, path, errors) do
+      case ensure_key(key, conformed, path) do
+        :ok ->
+          ensure_keys(rest, conformed, path, errors)
+
+        error ->
+          ensure_keys(rest, conformed, path, [error | errors])
+      end
+    end
+
+    defp ensure_key(key, conformed, path) do
+      if Map.has_key?(conformed, key) do
+        :ok
+      else
+        {:error, [Conformer.error(path ++ [key], conformed, ":required")]}
+      end
     end
   end
 
@@ -41,8 +118,12 @@ defmodule Norm.Spec.Selection do
     defimpl Norm.Generatable do
       alias Norm.Generatable
 
-      def gen(%{subset: specs}) do
-        case Enum.reduce(specs, %{}, &to_gen/2) do
+      # In order to build a semantically meaningful selection we need to generate
+      # all of the specified fields as well as the fields from the underlying
+      # schema. We can then merge both of those maps together with the required
+      # fields taking precedence.
+      def gen(%{required: required, schema: schema}) do
+        case Enum.reduce(required, %{}, & to_gen(&1, schema, &2)) do
           {:error, error} ->
             {:error, error}
 
@@ -51,10 +132,10 @@ defmodule Norm.Spec.Selection do
         end
       end
 
-      defp to_gen(_, {:error, error}), do: {:error, error}
-
-      defp to_gen({key, spec}, generator) do
-        case Generatable.gen(spec) do
+      defp to_gen(_, _schema, {:error, error}), do: {:error, error}
+      # If we're here than we're processing a key with an inner selection.
+      defp to_gen({key, selection}, _schema, generator) do
+        case Generatable.gen(selection) do
           {:ok, g} ->
             Map.put(generator, key, g)
 
@@ -62,37 +143,12 @@ defmodule Norm.Spec.Selection do
             {:error, error}
         end
       end
-    end
-  end
-
-  defimpl Norm.Conformer.Conformable do
-    alias Norm.Conformer
-    alias Norm.Conformer.Conformable
-
-    def conform(%{subset: subset}, input, path) do
-      results =
-        subset
-        |> Enum.map(fn {key, spec} ->
-          val = Map.get(input, key)
-
-          if val do
-            {key, Conformable.conform(spec, val, path ++ [key])}
-          else
-            {key, {:error, [Conformer.error(path ++ [key], input, ":required")]}}
-          end
-        end)
-        |> Enum.reduce(%{ok: [], error: []}, fn {key, {result, r}}, acc ->
-          Map.put(acc, result, [{key, r} | acc[result]])
-        end)
-
-      if Enum.any?(results.error) do
-        errors =
-          results.error
-          |> Enum.flat_map(fn {_, errors} -> errors end)
-
-        {:error, errors}
-      else
-        {:ok, Enum.into(results.ok, %{})}
+      defp to_gen(key, schema, generator) do
+        # Its safe to just get the spec because at this point we *know* that the
+        # keys that have been selected are in the schema.
+        with {:ok, g} <- Generatable.gen(Norm.Schema.spec(schema, key)) do
+          Map.put(generator, key, g)
+        end
       end
     end
   end

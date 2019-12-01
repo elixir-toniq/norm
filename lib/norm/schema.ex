@@ -4,7 +4,7 @@ defmodule Norm.Schema do
 
   alias __MODULE__
 
-  defstruct specs: [], struct: nil
+  defstruct specs: %{}, struct: nil
 
   # If we're building a schema from a struct then we need to add a default spec
   # for each key that only checks for presence. This allows users to specify
@@ -13,17 +13,12 @@ defmodule Norm.Schema do
     specs =
       struct
       |> Map.from_struct()
-      |> Enum.to_list()
 
     %Schema{specs: specs, struct: name}
   end
 
   def build(map) when is_map(map) do
-    specs =
-      map
-      |> Enum.to_list()
-
-    %Schema{specs: specs}
+    %Schema{specs: map}
   end
 
   def spec(schema, key) do
@@ -41,30 +36,34 @@ defmodule Norm.Schema do
       {:error, [Conformer.error(path, input, "not a map")]}
     end
 
+    # Conforming a struct
     def conform(%{specs: specs, struct: target}, input, path) when not is_nil(target) do
       # Ensure we're mapping the correct struct
-      if Map.get(input, :__struct__) == target do
-        with {:ok, conformed} <- check_specs(specs, input, path) do
-          {:ok, struct(target, conformed)}
-        end
-      else
-        short_name =
-          target
-          |> Atom.to_string()
-          |> String.replace("Elixir.", "")
+      cond do
+        Map.get(input, :__struct__) != target ->
+          short_name =
+            target
+            |> Atom.to_string()
+            |> String.replace("Elixir.", "")
 
-        {:error, [Conformer.error(path, input, "#{short_name}")]}
+          {:error, [Conformer.error(path, input, "#{short_name}")]}
+
+        true ->
+          with {:ok, conformed} <- check_specs(specs, Map.from_struct(input), path) do
+            {:ok, struct(target, conformed)}
+          end
       end
     end
 
+    # conforming a map.
     def conform(%Norm.Schema{specs: specs}, input, path) do
       check_specs(specs, input, path)
     end
 
     defp check_specs(specs, input, path) do
       results =
-        specs
-        |> Enum.map(&check_spec(&1, input, path))
+        input
+        |> Enum.map(&check_spec(&1, specs, path))
         |> Enum.reduce(%{ok: [], error: []}, fn {key, {result, conformed}}, acc ->
           Map.put(acc, result, acc[result] ++ [{key, conformed}])
         end)
@@ -80,24 +79,13 @@ defmodule Norm.Schema do
       end
     end
 
-    defp check_spec({key, nil}, input, path) do
-      case Map.has_key?(input, key) do
-        false ->
-          {key, {:error, [Conformer.error(path ++ [key], input, ":required")]}}
+    defp check_spec({key, value}, specs, path) do
+      case Map.get(specs, key) do
+        nil ->
+          {key, {:ok, value}}
 
-        true ->
-          {key, {:ok, Map.get(input, key)}}
-      end
-    end
-
-    defp check_spec({key, spec}, input, path) do
-      case Map.has_key?(input, key) do
-        false ->
-          {key, {:error, [Conformer.error(path ++ [key], input, ":required")]}}
-
-        true ->
-          val = Map.get(input, key)
-          {key, Conformable.conform(spec, val, path ++ [key])}
+        spec ->
+          {key, Conformable.conform(spec, value, path ++ [key])}
       end
     end
   end
