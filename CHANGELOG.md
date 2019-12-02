@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.9.0 (December 02, 2019)
+
+* [fe5fc68](https://github.com/keathley/norm/commit/fe5fc682bb9b4fd1ce03c9068303751193c33cdb) Changes to optionality in schema's and selection
+
 ## 0.8.1 (November 24, 2019)
 
 * [41bff7a](https://github.com/keathley/norm/commit/41bff7a4af1296bc16eff298249f01546fcf245d) Add Credo Support - Joey Rosztoczy
