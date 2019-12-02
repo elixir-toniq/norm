@@ -142,6 +142,30 @@ conform!(%{user: %{name: "chris", age: -31}}, user_schema)
     (norm) lib/norm.ex:44: Norm.conform!/2
 ```
 
+Schema's are designed to allow systems to grow over time. They provide this
+functionality in two ways. The first is that any unspecified fields in the input
+are passed through when conforming the input. The second is that all keys in a
+schema are optional. This means that all of these are valid:
+
+```elixir
+user_schema = schema(%{
+  name: spec(is_binary()),
+  age: spec(is_integer()),
+})
+
+conform!(%{}, user_schema)
+=> %{}
+conform!(%{age: 31}, user_schema)
+=> %{age: 31}
+conform!(%{foo: :foo, bar: :bar}, user_schema)
+=> %{foo: :foo, bar: :bar}
+```
+
+If you're used to more restrictive systems for managing data these might seem
+like odd choices. We'll see how to specify required keys when we discuss Selections.
+
+#### Structs
+
 You can also create specs from structs:
 
 ```elixir
@@ -183,23 +207,12 @@ Schemas accomodate growth by disregarding any unspecified keys in the input map.
 This allows callers to start sending new data over time without coordination
 with the consuming function.
 
-### Selections
+### Selections and optionality
 
-You may have noticed that there's no way to specify optional keys in
-a schema. This may seem like an oversight but its actually an intentional
-design decision. Whether a key should be present in a schema is determined
-by the call site and not by the schema itself. For instance think about
-the assigns in a plug conn. When are the assigns optional? It depends on
-where you are in the pipeline.
-
-Schemas also force all keys to match at all times. This is generally
-useful as it limits your ability to introduce errors. But it also limits
-schema growth and turns changes that should be non-breaking into breaking
-changes.
-
-In order to support both of these scenarios Norm provides the
-`selection/2` function. `selection/2` allows you to specify exactly the
-keys you require from a schema at the place where you require them.
+We said that all of the fields in a schema are optional. In order to specify
+the keys that are required in a specific use case we can use a Selection. The
+Selections takes a schema and a list of keys - or keys to lists of keys - that
+must be present in the schema.
 
 ```elixir
 user_schema = schema(%{
@@ -211,12 +224,32 @@ user_schema = schema(%{
 just_age = selection(user_schema, [user: [:age]])
 
 conform!(%{user: %{name: "chris", age: 31}}, just_age)
-=> %{user: %{age: 31}}
+=> %{user: %{age: 31, name: "chris"}}
 
-# Selection also disregards unspecified keys
-conform!(%{user: %{name: "chris", age: 31, unspecified: nil}, other_stuff: :foo}, just_age)
-=> %{user: %{age: 31}}
+conform!(%{user: %{name: "chris"}}, just_age)
+** (Norm.MismatchError) Could not conform input:
+val: %{name: "chris"} in: :user/:age fails: :required
+    (norm) lib/norm.ex:387: Norm.conform!/2
 ```
+
+If you need to mark all fields in a schema as required you can elide the list
+of keys like so:
+
+```elixir
+user_schema = schema(%{
+  user: schema(%{
+    name: spec(is_binary()),
+    age: spec(is_integer()),
+  })
+})
+
+# Require all fields recursively
+conform!(%{user: %{name: "chris", age: 31}}, selection(user_schema))
+```
+
+Selections are an important tool because they give control over optionality
+back to the call site. This allows callers to determine what they actually need
+and makes schema's much more reusable.
 
 ### Patterns
 
@@ -363,9 +396,7 @@ working to make improvements.
 Norm is being actively worked on. Any contributions are very welcome. Here is a
 limited set of ideas that are coming soon.
 
-- [ ] Support generators for other primitive types (floats, etc.)
 - [ ] More streamlined specification of keyword lists.
-- [ ] selections shouldn't need a path if you just want to match all the keys in the schema
 - [ ] Support "sets" of literal values
 - [ ] specs for functions and anonymous functions
 - [ ] easier way to do dispatch based on schema keys
