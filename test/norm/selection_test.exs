@@ -2,13 +2,11 @@ defmodule Norm.SelectionTest do
   use ExUnit.Case, async: true
   import Norm
 
-  def user_schema,
-    do:
-      schema(%{
-        name: spec(is_binary()),
-        age: spec(is_integer() and (&(&1 > 0))),
-        email: spec(is_binary() and (&(&1 =~ ~r/@/)))
-      })
+  def user_schema, do: schema(%{
+    name: spec(is_binary()),
+    age: spec(is_integer() and (&(&1 > 0))),
+    email: spec(is_binary() and (&(&1 =~ ~r/@/)))
+  })
 
   @input %{
     name: "chris",
@@ -18,11 +16,10 @@ defmodule Norm.SelectionTest do
 
   describe "selection/2" do
     test "can define selections of schemas" do
-      assert %{age: 31} == conform!(@input, selection(user_schema(), [:age]))
-
-      assert %{age: 31, name: "chris"} ==
-               conform!(@input, selection(user_schema(), [:age, :name]))
-
+      assert @input == conform!(@input, selection(user_schema(), [:age]))
+      assert @input == conform!(@input, selection(user_schema(), [:age, :name]))
+      assert @input == conform!(@input, selection(user_schema(), [:age, :name, :email]))
+      assert @input == conform!(@input, selection(schema(%{name: spec(is_binary())}), [:name]))
       assert {:error, errors} = conform(%{age: -100}, selection(user_schema(), [:age]))
       assert errors == [%{spec: "&(&1 > 0)", input: -100, path: [:age]}]
     end
@@ -40,6 +37,32 @@ defmodule Norm.SelectionTest do
       assert errors == [%{spec: ":required", input: %{fauxuser: %{age: 31}}, path: [:user]}]
     end
 
+    test "works with nested selections"  do
+      user_with_name = schema(%{user: selection(user_schema(), [:name])})
+      input = %{name: "chris"}
+      assert %{user: input} == conform!(%{user: input}, selection(user_with_name))
+
+      assert_raise ArgumentError, fn ->
+        user = schema(%{name: spec(is_binary()), age: spec(is_integer())})
+        required_user = selection(user)
+        selection(schema(%{user: required_user}), [user: [:name]])
+      end
+    end
+
+    test "returns an error if a non map input is given" do
+      assert {:error, errors} = conform(123, selection(user_schema()))
+      assert errors == [
+        %{input: 123, path: [], spec: "not a map"}
+      ]
+    end
+
+    test "if no keys are selected all keys are enforced recursively" do
+      assert valid?(@input, selection(user_schema()))
+      refute valid?(%{}, selection(user_schema()))
+      refute valid?(%{name: "chris"}, selection(user_schema()))
+      refute valid?(%{name: "chris", age: 31}, selection(user_schema()))
+    end
+
     test "errors if there are keys that aren't specified in a schema" do
       assert_raise Norm.SpecError, fn ->
         selection(schema(%{age: spec(is_integer())}), [:name])
@@ -52,14 +75,6 @@ defmodule Norm.SelectionTest do
       assert_raise Norm.SpecError, fn ->
         selection(schema(%{user: schema(%{age: spec(is_integer())})}), foo: [:name])
       end
-    end
-
-    test "allows schemas to grow" do
-      schema = schema(%{user: schema(%{name: spec(is_binary())})})
-      select = selection(schema, user: [:name])
-
-      assert %{user: %{name: "chris"}} ==
-               conform!(%{user: %{name: "chris", age: 31}, foo: :foo}, select)
     end
   end
 
@@ -108,14 +123,12 @@ defmodule Norm.SelectionTest do
     end
 
     test "can generate inner schemas" do
-      s =
-        schema(%{
-          user:
-            schema(%{
-              name: spec(is_binary()),
-              age: spec(is_integer())
-            })
+      s = schema(%{
+        user: schema(%{
+          name: spec(is_binary()),
+          age: spec(is_integer())
         })
+      })
 
       select = selection(s, user: [:age])
 

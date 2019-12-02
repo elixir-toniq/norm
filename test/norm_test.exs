@@ -48,7 +48,7 @@ defmodule NormTest do
       user = schema(%{name: spec(is_binary()), age: spec(is_integer())})
       ok = {:ok, selection(user, [:name])}
 
-      assert {:ok, %{name: "chris"}} == conform!({:ok, %{name: "chris", age: 31}}, ok)
+      assert {:ok, %{name: "chris", age: 31}} == conform!({:ok, %{name: "chris", age: 31}}, ok)
       assert {:error, errors} = conform({:ok, %{age: 31}}, ok)
       assert errors == [%{spec: ":required", input: %{age: 31}, path: [1, :name]}]
     end
@@ -102,18 +102,6 @@ defmodule NormTest do
 
       spec = with_gen(schema(%{foo: spec(is_integer())}), StreamData.constant("foo"))
       for str <- Enum.take(gen(spec), 5), do: assert(str == "foo")
-    end
-  end
-
-  describe "schema/1" do
-    test "creates a re-usable schema" do
-      s = schema(%{name: spec(is_binary())})
-      assert %{name: "Chris"} == conform!(%{name: "Chris"}, s)
-      assert {:error, _errors} = conform(%{foo: "bar"}, s)
-      assert {:error, _errors} = conform(%{name: 123}, s)
-
-      user = schema(%{user: schema(%{name: spec(is_binary())})})
-      assert %{user: %{name: "Chris"}} == conform!(%{user: %{name: "Chris"}}, user)
     end
   end
 
@@ -215,15 +203,18 @@ defmodule NormTest do
         %{name: "andra", age: 30}
       ]
 
-      assert [%{name: "chris"}, %{name: "andra"}] == conform!(input, spec)
+      assert conform!(input, spec) == [
+        %{name: "chris", age: 31, email: "c@keathley.io"},
+        %{name: "andra", age: 30}
+      ]
 
       input = [
-        %{age: 31, email: "c@keathley.io"},
+        %{age: 31, email: "c@keathley.io", name: nil},
         %{name: :andra, age: 30},
       ]
       assert {:error, errors} = conform(input, spec)
       assert errors == [
-        %{spec: ":required", input: %{age: 31, email: "c@keathley.io"}, path: [0, :name]},
+        %{spec: "is_binary()", input: nil, path: [0, :name]},
         %{spec: "is_binary()", input: :andra, path: [1, :name]}
       ]
     end

@@ -478,17 +478,62 @@ defmodule Norm do
   end
 
   @doc ~S"""
-  Creates a re-usable schema.
+  Creates a re-usable schema. Schema's are open which means that all keys are
+  optional and any non-specified keys are passed through without being conformed.
+  If you need to mark keys as required instead of optional you can use `selection`.
 
   ## Examples
 
-      iex> conform!(%{age: 31, name: "chris"},
-      ...>   schema(%{age: spec(is_integer()), name: spec(is_binary())})
-      ...> )
+      iex> valid?(%{}, schema(%{name: spec(is_binary())}))
+      true
+      iex> valid?(%{name: "Chris"}, schema(%{name: spec(is_binary())}))
+      true
+      iex> valid?(%{name: "Chris", age: 31}, schema(%{name: spec(is_binary())}))
+      true
+      iex> valid?(%{age: 31}, schema(%{name: spec(is_binary())}))
+      true
+      iex> valid?(%{name: 123}, schema(%{name: spec(is_binary())}))
+      false
+      iex> conform!(%{}, schema(%{name: spec(is_binary())}))
+      %{}
+      iex> conform!(%{age: 31, name: "chris"}, schema(%{name: spec(is_binary())}))
       %{age: 31, name: "chris"}
+      iex> conform!(%{age: 31}, schema(%{name: spec(is_binary())}))
+      %{age: 31}
+      iex> conform!(%{user: %{name: "chris"}}, schema(%{user: schema(%{name: spec(is_binary())})}))
+      %{user: %{name: "chris"}}
   """
   def schema(input) when is_map(input) do
     Schema.build(input)
+  end
+
+  @doc ~S"""
+  Selections can be used to mark keys on a schema as required. Any unspecified keys
+  in the selection are still considered optional. Selections, like schemas,
+  are open and allow unspecied keys to be passed through. If no selectors are
+  provided then `selection` defaults to `:all` and recursively marks all keys in
+  all nested schema's. If the schema includes internal selections these selections
+  will not be overwritten.
+
+  ## Examples
+
+      iex> valid?(%{name: "chris"}, selection(schema(%{name: spec(is_binary())}), [:name]))
+      true
+      iex> valid?(%{}, selection(schema(%{name: spec(is_binary())}), [:name]))
+      false
+      iex> valid?(%{user: %{name: "chris"}}, selection(schema(%{user: schema(%{name: spec(is_binary())})}), [user: [:name]]))
+      true
+      iex> conform!(%{name: "chris"}, selection(schema(%{name: spec(is_binary())}), [:name]))
+      %{name: "chris"}
+      iex> conform!(%{name: "chris", age: 31}, selection(schema(%{name: spec(is_binary())}), [:name]))
+      %{name: "chris", age: 31}
+
+  ## Require all keys
+      iex> valid?(%{user: %{name: "chris"}}, selection(schema(%{user: schema(%{name: spec(is_binary())})})))
+      true
+  """
+  def selection(%Schema{} = schema, path \\ :all) do
+    Selection.new(schema, path)
   end
 
   @doc ~S"""
@@ -525,19 +570,6 @@ defmodule Norm do
   """
   def one_of(specs) when is_list(specs) do
     Union.new(specs)
-  end
-
-  @doc ~S"""
-  Selections provide a way to allow optional keys in a schema. This allows
-  schema's to be defined once and re-used in multiple scenarios.
-
-  ## Examples
-
-      iex> conform!(%{age: 31}, selection(schema(%{age: spec(is_integer()), name: spec(is_binary())}), [:age]))
-      %{age: 31}
-  """
-  def selection(%Schema{} = schema, path) do
-    Selection.new(schema, path)
   end
 
   @doc ~S"""

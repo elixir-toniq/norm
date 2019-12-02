@@ -28,27 +28,28 @@ defmodule Norm.SchemaTest do
   test "creates a re-usable schema" do
     s = schema(%{name: spec(is_binary())})
     assert %{name: "Chris"} == conform!(%{name: "Chris"}, s)
-    assert {:error, _errors} = conform(%{foo: "bar"}, s)
+    assert %{foo: "bar"} == conform!(%{foo: "bar"}, s)
     assert {:error, _errors} = conform(%{name: 123}, s)
 
     user = schema(%{user: schema(%{name: spec(is_binary())})})
     assert %{user: %{name: "Chris"}} == conform!(%{user: %{name: "Chris"}}, user)
   end
 
-  test "requires all of the keys specified in the schema" do
-    s =
-      schema(%{
-        name: spec(is_binary()),
-        age: spec(is_integer())
-      })
+  test "all keys in a schema are optional" do
+    s = schema(%{name: spec(is_binary()), age: spec(is_integer())})
+
+    assert valid?(%{}, s)
+    assert valid?(%{name: "chris"}, s)
+    assert valid?(%{age: 123}, s)
+
+    refute valid?(%{name: 123}, s)
+    refute valid?(%{age: "11"}, s)
+  end
+
+  test "schemas allow additional keys" do
+    s = schema(%{name: spec(is_binary())})
 
     assert %{name: "chris", age: 31} == conform!(%{name: "chris", age: 31}, s)
-    assert {:error, errors} = conform(%{name: "chris"}, s)
-    assert errors == [%{spec: ":required", input: %{name: "chris"}, path: [:age]}]
-
-    user = schema(%{user: s})
-    assert {:error, errors} = conform(%{user: %{age: 31}}, user)
-    assert errors == [%{spec: ":required", input: %{age: 31}, path: [:user, :name]}]
   end
 
   test "works with boolean values" do
@@ -64,39 +65,6 @@ defmodule Norm.SchemaTest do
     assert %{foo: nil} == conform!(%{foo: nil}, s)
     assert {:error, errors} = conform(%{foo: 123}, s)
     assert errors == [%{spec: "is_nil()", input: 123, path: [:foo]}]
-  end
-
-  describe "generation" do
-    test "works with maps" do
-      s =
-        schema(%{
-          name: spec(is_binary()),
-          age: spec(is_integer())
-        })
-
-      maps =
-        s
-        |> gen()
-        |> Enum.take(10)
-
-      for map <- maps do
-        assert is_map(map)
-        assert match?(%{name: _, age: _}, map)
-        assert is_binary(map.name)
-        assert is_integer(map.age)
-      end
-    end
-
-    test "returns errors if it contains unknown generators" do
-      s =
-        schema(%{
-          age: spec(&(&1 > 0))
-        })
-
-      assert_raise Norm.GeneratorError, "Unable to create a generator for: &(&1 > 0)", fn ->
-        gen(s)
-      end
-    end
   end
 
   test "schemas can be composed with other specs" do
@@ -128,15 +96,6 @@ defmodule Norm.SchemaTest do
     ]
   end
 
-  test "only returns specced keys" do
-    user_schema =
-      schema(%{
-        name: spec(is_binary())
-      })
-
-    assert {:ok, %{name: "chris"}} == conform(%{name: "chris", age: 31}, user_schema)
-  end
-
   test "works with string keys and atom keys" do
     user =
       schema(%{
@@ -166,7 +125,7 @@ defmodule Norm.SchemaTest do
 
       assert errors == [
         %{spec: "Norm.SchemaTest.User", input: %{age: 31, email: "c@keathley.io", name: "chris"}, path: []}
-             ]
+      ]
     end
 
     test "fails if the wrong struct is passed" do
@@ -176,13 +135,11 @@ defmodule Norm.SchemaTest do
 
       assert errors == [
         %{spec: "Norm.SchemaTest.OtherUser", input: %Norm.SchemaTest.User{age: 31, email: "c@keathley.io", name: "chris"}, path: []}
-             ]
+      ]
     end
 
     test "can create a schema from a struct" do
-      s = schema(%User{})
-
-      assert User.chris() == conform!(User.chris(), s)
+      assert User.chris() == conform!(User.chris(), schema(%User{}))
     end
 
     test "can specify specs for keys" do
@@ -222,6 +179,39 @@ defmodule Norm.SchemaTest do
         assert is_integer(user.age) and user.age >= 0
         assert is_nil(user.name)
         assert is_nil(user.email)
+      end
+    end
+  end
+
+  describe "generation" do
+    test "works with maps" do
+      s =
+        schema(%{
+          name: spec(is_binary()),
+          age: spec(is_integer())
+        })
+
+      maps =
+        s
+        |> gen()
+        |> Enum.take(10)
+
+      for map <- maps do
+        assert is_map(map)
+        assert match?(%{name: _, age: _}, map)
+        assert is_binary(map.name)
+        assert is_integer(map.age)
+      end
+    end
+
+    test "returns errors if it contains unknown generators" do
+      s =
+        schema(%{
+          age: spec(&(&1 > 0))
+        })
+
+      assert_raise Norm.GeneratorError, "Unable to create a generator for: &(&1 > 0)", fn ->
+        gen(s)
       end
     end
   end
