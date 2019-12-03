@@ -57,7 +57,13 @@ defmodule Norm.Schema do
 
     # conforming a map.
     def conform(%Norm.Schema{specs: specs}, input, path) do
-      check_specs(specs, input, path)
+      if Map.get(input, :__struct__) != nil do
+        with {:ok, conformed} <- check_specs(specs, Map.from_struct(input), path) do
+          {:ok, struct(input.__struct__, conformed)}
+        end
+      else
+        check_specs(specs, input, path)
+      end
     end
 
     defp check_specs(specs, input, path) do
