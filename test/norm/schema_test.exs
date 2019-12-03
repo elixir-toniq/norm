@@ -117,6 +117,13 @@ defmodule Norm.SchemaTest do
     ]
   end
 
+  test "conforming struct input with a map schema" do
+    assert %OtherUser{} == conform!(%OtherUser{}, schema(%{}))
+    assert %OtherUser{name: "chris"} == conform!(
+      %OtherUser{name: "chris"},
+      selection(schema(%{name: spec(is_binary())})))
+  end
+
   describe "schema/1 with struct" do
     test "fails non-structs when the schema is a struct" do
       input = Map.from_struct(User.chris())
