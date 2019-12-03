@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.9.1 (December 03, 2019)
+
+* [52dbe8a](https://github.com/keathley/norm/commit/52dbe8a19906c4d32311d09fbc666fccb0b45d2e) Conform struct input with map schemas
+
 ## 0.9.0 (December 02, 2019)
 
 * [fe5fc68](https://github.com/keathley/norm/commit/fe5fc682bb9b4fd1ce03c9068303751193c33cdb) Changes to optionality in schema's and selection
