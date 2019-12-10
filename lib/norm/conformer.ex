@@ -12,7 +12,6 @@ defmodule Norm.Conformer do
     |> Enum.reduce(%{ok: [], error: []}, fn {result, s}, acc ->
       Map.put(acc, result, acc[result] ++ [s])
     end)
-    |> update_in([:ok], &List.flatten(&1))
     |> update_in([:error], &List.flatten(&1))
   end
 

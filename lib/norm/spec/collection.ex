@@ -69,7 +69,7 @@ defmodule Norm.Spec.Collection do
       else
         :ok
       end
-  end
+    end
 
     defp check_map_of(input, path, opts) do
       cond do

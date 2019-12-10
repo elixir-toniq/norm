@@ -243,6 +243,11 @@ defmodule NormTest do
       end
     end
 
+    test "tuples don't flatten good results" do
+      s = coll_of({spec(is_atom()), coll_of(spec(is_binary()))})
+      assert [foo: ["foo"]] == conform!([foo: ["foo"]], s)
+    end
+
     test "can be used to spec keyword lists" do
       opts = one_of([
         {:name, spec(is_atom())},
