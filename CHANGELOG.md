@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.9.2 (December 09, 2019)
+
+* [cc9ea68](https://github.com/keathley/norm/commit/cc9ea6856ba9a08402d6077f749348d61c247565) Don't flatten good results - Chris Keathley
+
 ## 0.9.1 (December 03, 2019)
 
 * [52dbe8a](https://github.com/keathley/norm/commit/52dbe8a19906c4d32311d09fbc666fccb0b45d2e) Conform struct input with map schemas
