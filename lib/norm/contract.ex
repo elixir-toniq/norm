@@ -64,7 +64,6 @@ defmodule Norm.Contract do
   defmacro __using__(_) do
     quote do
       import Kernel, except: [@: 1, def: 2]
-      require Norm
       import Norm, only: [spec: 1]
       import Norm.Contract
       Module.register_attribute(__MODULE__, :norm_contracts, accumulate: true)
