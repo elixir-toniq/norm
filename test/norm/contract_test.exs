@@ -38,20 +38,6 @@ defmodule Norm.ContractTest do
     end
   end
 
-  test "disable" do
-    defmodule Disabled do
-      use Norm
-
-      def int(), do: spec(is_integer())
-
-      @contract foo(n :: int()) :: int(),
-        enabled: false
-      def foo(n), do: n
-    end
-
-    assert Disabled.foo("bar") == "bar"
-  end
-
   test "bad contract" do
     assert_raise ArgumentError, ~r/got: `@contract\(foo\(n\)\)`/, fn ->
       defmodule BadContract do

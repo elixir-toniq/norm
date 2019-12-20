@@ -7,12 +7,8 @@ defmodule Norm.Contract do
 
   To use contracts, call `use Norm` which also imports all `Norm` functions.
 
-  ## Options
-
-    * `:enabled` - By default are contracts are enforced at runtime. This behaviour can be changed
-      on a per-contract basis by setting this option or globally by setting `:enable_contracts`
-      configuration for `:norm` application. For example, to skip all contracts in production, set:
-      `config :norm, enable_contracts: Mix.env != :prod`.
+  Sometimes you may want to turn off contracts checking. For example, to skip contracts in production,
+  set: `config :norm, enable_contracts: Mix.env != :prod`.
 
   ## Examples
 
@@ -81,22 +77,9 @@ defmodule Norm.Contract do
 
   ## Internals
 
-  defp defcontract([_] = expr) do
-    if enabled?([]) do
+  defp defcontract(expr) do
+    if Application.get_env(:norm, :enable_contracts, true) do
       do_defcontract(expr)
-    end
-  end
-
-  defp defcontract([_, options] = expr) do
-    if enabled?(options) do
-      do_defcontract(expr)
-    end
-  end
-
-  defp enabled?(options) do
-    case Keyword.fetch(options, :enabled) do
-      {:ok, enabled} -> enabled
-      :error -> Application.get_env(:norm, :enable_contracts, true)
     end
   end
 
