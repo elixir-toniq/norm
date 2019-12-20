@@ -3,18 +3,11 @@ defmodule Norm.Contract do
   Design by Contract with Norm.
 
   This module provides a `@contract` macro that can be used to define specs for arguments and the
-  return value of a given function and optionally additional pre- and post-conditions.
+  return value of a given function.
 
   To use contracts, call `use Norm` which also imports all `Norm` functions.
 
   ## Options
-
-    * `:requires` - a function that can be used to check arbitrary pre-conditions.
-      The function receives the same arguments as the function under contract.
-
-    * `:ensures` - a function that can be used to check arbitrary post-conditions. The function
-      receives the same arguments as the function under contract as well as the result of the
-      function call as the last argument.
 
     * `:enabled` - By default are contracts are enforced at runtime. This behaviour can be changed
       on a per-contract basis by setting this option or globally by setting `:enable_contracts`
@@ -36,16 +29,6 @@ defmodule Norm.Contract do
         end
       end
 
-  Besides ensuring arguments and return value conforms to a particular `Norm.Spec`,
-  arbitrary pre- and post-conditions can be specified. For post-conditions,
-  a `result` binding is provided to access the return value of the function.
-
-      @contract rgb_to_hex(r :: rgb(), g :: rgb(), b :: rgb()) :: hex(),
-        requires: fn r, _, _ -> r != 42 end,
-        ensures: fn _, _, _, result -> result != "#FFFFFF" end
-      def rgb_to_hex(r, g, b) do
-        # ...
-      end
   """
 
   @doc false
@@ -118,13 +101,10 @@ defmodule Norm.Contract do
   end
 
   defp do_defcontract(expr) do
-    {call, result_spec, guards} =
+    {call, result_spec} =
       case expr do
-        [{:"::", _, [call, result_spec]}, guards] ->
-          {call, result_spec, guards}
-
         [{:"::", _, [call, result_spec]}] ->
-          {call, result_spec, []}
+          {call, result_spec}
 
         _ ->
           actual = Macro.to_string({:@, [], [{:contract, [], expr}]})
@@ -159,27 +139,7 @@ defmodule Norm.Contract do
       end
 
     conform_args = {:__block__, [], conform_args}
-
-    run_requires =
-      if guards[:requires] do
-        quote do
-          unless apply(unquote(guards[:requires]), unquote(arg_vars)) do
-            raise "pre-condition failed: #{unquote(Macro.to_string(guards[:requires]))}"
-          end
-        end
-      end
-
     result = Macro.var(:result, nil)
-
-    run_ensures =
-      if guards[:ensures] do
-        quote do
-          unless apply(unquote(guards[:ensures]), unquote(arg_vars) ++ [unquote(result)]) do
-            raise "post-condition failed: #{unquote(Macro.to_string(guards[:ensures]))}"
-          end
-        end
-      end
-
     call = {name, call_meta, arg_vars}
 
     quote do
@@ -187,10 +147,8 @@ defmodule Norm.Contract do
 
       def unquote(call_with_contract(call)) do
         unquote(conform_args)
-        unquote(run_requires)
         unquote(result) = unquote(call_without_contract(call))
         Norm.conform!(unquote(result), unquote(result_spec))
-        unquote(run_ensures)
         unquote(result)
       end
     end
