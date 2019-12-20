@@ -5,7 +5,7 @@ defmodule Norm.Contract do
   This module provides a `@contract` macro that can be used to define specs for arguments and the
   return value of a given function and optionally additional pre- and post-conditions.
 
-  Calling `use Norm.Contract` automatically imports the `Norm.spec/1` macro.
+  To use contracts, call `use Norm` which also imports all `Norm` functions.
 
   ## Options
 
@@ -17,14 +17,14 @@ defmodule Norm.Contract do
       function call as the last argument.
 
     * `:enabled` - By default are contracts are enforced at runtime. This behaviour can be changed
-      on a per-contract basis by setting this option, or globally by setting `:enable_contracts`
-      configuration for `:norm` application. For example, to skip contracts in production, set:
+      on a per-contract basis by setting this option or globally by setting `:enable_contracts`
+      configuration for `:norm` application. For example, to skip all contracts in production, set:
       `config :norm, enable_contracts: Mix.env != :prod`.
 
   ## Examples
 
       defmodule Colors do
-        use Norm.Contract
+        use Norm
 
         def rgb(), do: spec(is_integer() and &(&1 in 0..255))
 
@@ -64,7 +64,6 @@ defmodule Norm.Contract do
   defmacro __using__(_) do
     quote do
       import Kernel, except: [@: 1, def: 2]
-      import Norm, only: [spec: 1]
       import Norm.Contract
       Module.register_attribute(__MODULE__, :norm_contracts, accumulate: true)
       @before_compile Norm.Contract

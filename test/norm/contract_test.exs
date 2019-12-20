@@ -3,7 +3,7 @@ defmodule Norm.ContractTest do
 
   test "success" do
     defmodule Success do
-      use Norm.Contract
+      use Norm
 
       @contract foo(n :: spec(is_integer())) :: spec(is_integer())
       def foo(n), do: n
@@ -14,7 +14,7 @@ defmodule Norm.ContractTest do
 
   test "arg mismatch" do
     defmodule ArgMismatch do
-      use Norm.Contract
+      use Norm
 
       @contract foo(n :: spec(is_integer())) :: spec(is_integer())
       def foo(n), do: n
@@ -27,7 +27,7 @@ defmodule Norm.ContractTest do
 
   test "result mismatch" do
     defmodule ResultMismatch do
-      use Norm.Contract
+      use Norm
 
       @contract foo(n :: spec(is_integer())) :: spec(is_binary())
       def foo(n), do: n
@@ -40,7 +40,7 @@ defmodule Norm.ContractTest do
 
   test "pre-conditions" do
     defmodule PreConditions do
-      use Norm.Contract
+      use Norm
 
       @contract foo(n :: spec(is_integer())) :: spec(is_integer()),
         requires: fn n -> n in 0..9 end
@@ -54,7 +54,7 @@ defmodule Norm.ContractTest do
 
   test "post-conditions" do
     defmodule PostConditions do
-      use Norm.Contract
+      use Norm
 
       @contract foo(n :: spec(is_integer())) :: spec(is_integer()),
         ensures: fn _n, result -> result in 0..9 end
@@ -68,7 +68,7 @@ defmodule Norm.ContractTest do
 
   test "with local functions" do
     defmodule WithLocalFunctions do
-      use Norm.Contract
+      use Norm
 
       def int(), do: spec(is_integer())
 
@@ -96,7 +96,7 @@ defmodule Norm.ContractTest do
 
   test "disable" do
     defmodule Disabled do
-      use Norm.Contract
+      use Norm
 
       def int(), do: spec(is_integer())
 
@@ -111,7 +111,7 @@ defmodule Norm.ContractTest do
   test "bad contract" do
     assert_raise ArgumentError, ~r/got: `@contract\(foo\(n\)\)`/, fn ->
       defmodule BadContract do
-        use Norm.Contract
+        use Norm
 
         @contract foo(n)
         def foo(n), do: n
@@ -122,7 +122,7 @@ defmodule Norm.ContractTest do
   test "bad arg" do
     assert_raise ArgumentError, ~r/`arg :: spec`, got: `spec\(is_integer\(\)\)`/, fn ->
       defmodule BadArg do
-        use Norm.Contract
+        use Norm
 
         @contract foo(spec(is_integer())) :: spec(is_integer())
         def foo(n), do: n
@@ -133,7 +133,7 @@ defmodule Norm.ContractTest do
   test "no function" do
     assert_raise ArgumentError, "contract for undefined function foo/0", fn ->
       defmodule NoFunction do
-        use Norm.Contract
+        use Norm
 
         @contract foo() :: spec(is_integer())
       end
