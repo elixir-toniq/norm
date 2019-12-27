@@ -19,7 +19,9 @@ defmodule Norm.MixProject do
   end
 
   def application do
-    []
+    [
+      env: [enable_contracts: true]
+    ]
   end
 
   defp deps do

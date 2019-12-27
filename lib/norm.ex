@@ -349,6 +349,14 @@ defmodule Norm do
   alias Norm.MismatchError
   alias Norm.GeneratorError
 
+  @doc false
+  defmacro __using__(_) do
+    quote do
+      import Norm
+      use Norm.Contract
+    end
+  end
+
   @doc ~S"""
   Verifies that the payload conforms to the specification. A "success tuple"
   is returned that contains either the conformed value or the error explanation.
