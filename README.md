@@ -37,6 +37,23 @@ user_schema
 ]
 ```
 
+Norm can also be used to specify contracts for function definitions:
+
+```elixir
+defmodule Colors do
+  use Norm
+
+  def rgb(), do: spec(is_integer() and &(&1 in 0..255))
+
+  def hex(), do: spec(is_binary() and &String.starts_with?(&1, "#"))
+
+  @contract rgb_to_hex(r :: rgb(), g :: rgb(), b :: rgb()) :: hex()
+  def rgb_to_hex(r, g, b) do
+    # ...
+  end
+end
+```
+
 ## Installation
 
 Add `norm` to your list of dependencies in `mix.exs`. If you'd like to use
@@ -384,6 +401,32 @@ gen(age) |> StreamData.map(&Integer.to_string/1) |> Enum.take(5)
 
 This allows you to compose generators however you need to while keeping your
 generation co-located with the specification of the data.
+
+## Adding contracts to functions
+
+You can `conform` data wherever it makes sense to do so in your application.
+But one of the most common ways to use Norm is to validate a functions arguments
+and return value. Because this is such a common pattern, Norm provides function
+annotations similar to `@spec`:
+
+```elixir
+defmodule Colors do
+  use Norm
+
+  def rgb(), do: spec(is_integer() and &(&1 in 0..255))
+
+  def hex(), do: spec(is_binary() and &String.starts_with?(&1, "#"))
+
+  @contract rgb_to_hex(r :: rgb(), g :: rgb(), b :: rgb()) :: hex()
+  def rgb_to_hex(r, g, b) do
+    # ...
+  end
+end
+```
+
+If the arguments for `rgb_to_hex` don't conform to the specification or if
+`rgb_to_hex` does not return a value that conforms to `hex` then an error will
+be raised.
 
 ## Should I use this?
 
