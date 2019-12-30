@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.10.0 (December 30, 2019)
+
+* [28105e6](https://github.com/keathley/norm/commit/28105e6d77245e9d21221028f25f860ab413e597) Contracts - Wojtek Mach
+* [02221e6](https://github.com/keathley/norm/commit/02221e6a1f02cc15177df651591fff8e96089fc4) Add docs about contracts to README - Chris Keathley
+
 ## 0.9.2 (December 09, 2019)
 
 * [cc9ea68](https://github.com/keathley/norm/commit/cc9ea6856ba9a08402d6077f749348d61c247565) Don't flatten good results - Chris Keathley
