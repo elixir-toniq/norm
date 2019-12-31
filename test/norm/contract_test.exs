@@ -69,4 +69,20 @@ defmodule Norm.ContractTest do
       end
     end
   end
+
+  test "reflection" do
+    defmodule Reflection do
+      use Norm
+
+      def int(), do: spec(is_integer())
+
+      @contract foo(a :: int(), b :: int()) :: int()
+      def foo(a, b), do: a + b
+    end
+
+    contract = Reflection.__contract__({:foo, 2})
+
+    assert inspect(contract) ==
+             "%Norm.Contract{args: [a: #Norm.Spec<is_integer()>, b: #Norm.Spec<is_integer()>], result: #Norm.Spec<is_integer()>}"
+  end
 end
