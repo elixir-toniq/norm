@@ -44,18 +44,18 @@ defmodule Norm.Contract do
     definitions = Module.definitions_in(env.module)
     contracts = Module.get_attribute(env.module, :norm_contracts)
 
-    for {name, arity} <- contracts do
+    for {name, arity, line} <- contracts do
       unless {name, arity} in definitions do
         raise ArgumentError, "contract for undefined function #{name}/#{arity}"
       end
 
-      defconformer(name, arity)
+      defconformer(name, arity, line)
     end
   end
 
   @doc false
   defmacro @{:contract, _, expr} do
-    defcontract(expr)
+    defcontract(expr, __CALLER__.line)
   end
 
   defmacro @other do
@@ -64,20 +64,20 @@ defmodule Norm.Contract do
     end
   end
 
-  defp defconformer(name, arity) do
+  defp defconformer(name, arity, line) do
     args =
       List.duplicate(nil, arity)
       |> Enum.with_index()
       |> Enum.map(fn {_, index} -> Macro.var(:"arg#{index}", nil) end)
 
-    quote do
+    quote line: line do
       defoverridable [{unquote(name), unquote(arity)}]
 
       def unquote(name)(unquote_splicing(args)) do
         contract = __MODULE__.__contract__({unquote(name), unquote(arity)})
 
-        for {val, {_arg, spec}} <- Enum.zip(unquote(args), contract.args) do
-          Norm.conform!(val, spec)
+        for {value, {_name, spec}} <- Enum.zip(unquote(args), contract.args) do
+          Norm.conform!(value, spec)
         end
 
         result = super(unquote_splicing(args))
@@ -87,7 +87,7 @@ defmodule Norm.Contract do
     end
   end
 
-  defp defcontract(expr) do
+  defp defcontract(expr, line) do
     if Application.get_env(:norm, :enable_contracts, true) do
       {name, args, result} = parse_contract_expr(expr)
       arity = length(args)
@@ -98,7 +98,7 @@ defmodule Norm.Contract do
           %Norm.Contract{args: unquote(args), result: unquote(result)}
         end
 
-        @norm_contracts {unquote(name), unquote(arity)}
+        @norm_contracts {unquote(name), unquote(arity), unquote(line)}
       end
     end
   end
