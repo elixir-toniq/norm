@@ -42,6 +42,9 @@ defmodule NormTest do
 
       assert {:error, errors} = conform({:ok, 123, "foo"}, ok)
       assert errors == [%{spec: "incorrect tuple size", input: {:ok, 123, "foo"}, path: []}]
+
+      assert {:error, errors} = conform(:error, ok)
+      assert errors == [%{input: :error, path: [], spec: "not a tuple"}]
     end
 
     test "tuples can be composed with schema's and selections" do
