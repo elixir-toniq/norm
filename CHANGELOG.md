@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.10.1 (January 14, 2020)
+
+* [45c05a0](https://github.com/keathley/norm/commit/45c05a003b0aa213b2e15803fa3130bc59a7c869) Don't raise exceptions when trying to conform tuples - Chris Keathley
+* [2d50cd7](https://github.com/keathley/norm/commit/2d50cd7f869eb63637b103e3ef378080c2571c18) Merge branch 'fix-exception-in-tuple-conformer' - Chris Keathley
+
 ## 0.10.0 (December 30, 2019)
 
 * [28105e6](https://github.com/keathley/norm/commit/28105e6d77245e9d21221028f25f860ab413e597) Contracts - Wojtek Mach
