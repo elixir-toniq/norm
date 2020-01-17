@@ -79,6 +79,10 @@ defimpl Norm.Conformer.Conformable, for: Tuple do
     {:error, [Conformer.error(path, input, "incorrect tuple size")]}
   end
 
+  def conform(_spec, input, path) when not is_tuple(input) do
+    {:error, [Conformer.error(path, input, "not a tuple")]}
+  end
+
   def conform(spec, input, path) do
     results =
       spec
