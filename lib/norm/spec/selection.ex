@@ -95,7 +95,8 @@ defmodule Norm.Spec.Selection do
     defp ensure_keys([{key, inner} | rest], conformed, path, errors) do
       case ensure_key(key, conformed, path) do
         :ok ->
-          inner_errors = ensure_keys(inner.required, conformed[key], path ++ [key], errors)
+          inner_value = Map.get(conformed, key)
+          inner_errors = ensure_keys(inner.required, inner_value, path ++ [key], errors)
           ensure_keys(rest, conformed, path, errors ++ inner_errors)
 
         error ->
