@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.10.2 (January 20, 2020)
+
+* [1a5e6ce](https://github.com/keathley/norm/commit/1a5e6ce7b0ace069342885e71b9fdfffd0fe0ee6) Handle selections around structs with nested maps - Chris Keathley
+* [dc32fab](https://github.com/keathley/norm/commit/dc32fab3adade4a5b3b6ab76dbc9d2a9d84b1d13) Merge branch 'selection-on-structs' - Chris Keathley
+
 ## 0.10.1 (January 14, 2020)
 
 * [45c05a0](https://github.com/keathley/norm/commit/45c05a003b0aa213b2e15803fa3130bc59a7c869) Don't raise exceptions when trying to conform tuples - Chris Keathley
