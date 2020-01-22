@@ -2,6 +2,20 @@ defmodule Norm.SelectionTest do
   use ExUnit.Case, async: true
   import Norm
 
+  defmodule Event do
+    import Norm
+
+    defstruct ~w|data|a
+
+    def s do
+      schema(%__MODULE__{
+        data: schema(%{
+          type: spec(is_atom())
+        })
+      })
+    end
+  end
+
   def user_schema, do: schema(%{
     name: spec(is_binary()),
     age: spec(is_integer() and (&(&1 > 0))),
@@ -75,6 +89,10 @@ defmodule Norm.SelectionTest do
       assert_raise Norm.SpecError, fn ->
         selection(schema(%{user: schema(%{age: spec(is_integer())})}), foo: [:name])
       end
+    end
+
+    test "works with structs" do
+      assert %Event{} = conform!(%Event{data: %{type: :foo}}, selection(Event.s()))
     end
   end
 
