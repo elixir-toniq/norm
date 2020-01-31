@@ -55,6 +55,19 @@ defmodule Norm.Spec do
     end
   end
 
+  # Function without parens
+  def build(quoted = {a, _, _}) when is_atom(a) do
+    predicate = Macro.to_string(quoted) <> "()"
+
+    quote do
+      run = fn input ->
+        input |> unquote(quoted)
+      end
+
+      %Spec{predicate: unquote(predicate), f: run, generator: unquote(a)}
+    end
+  end
+
   # Remote call
   def build({{:., _, _}, _, _} = quoted) do
     predicate = Macro.to_string(quoted)
