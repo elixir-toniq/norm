@@ -43,6 +43,24 @@ defmodule Norm.SpecTest do
       assert "foo" == conform!("foo", foo)
       assert {:error, [%{spec: "Foo.match?(\"foo\")", input: "bar", path: []}]} == conform("bar", foo)
     end
+
+    test "supports eliding of parenthesis around functions" do
+      require Integer
+
+      evens = spec(is_integer and Integer.is_even)
+      assert conform!(2, evens) == 2
+      assert {:error, errors} = conform("1", evens)
+      assert errors == [
+        %{input: "1", path: [], spec: "is_integer()"}
+      ]
+
+      matcher = spec(Foo.match?("foo") and is_binary)
+      assert conform!("foo", matcher) == "foo"
+      assert {:error, errors} = conform("1", matcher)
+      assert errors == [
+        %{input: "1", path: [], spec: "Foo.match?(\"foo\")"}
+      ]
+    end
   end
 
   describe "generation" do
