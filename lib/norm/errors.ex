@@ -34,6 +34,9 @@ defmodule Norm.SpecError do
   defexception [:message]
   alias Norm.Spec
   alias Norm.Schema
+  alias Norm.Spec.Collection
+  alias Norm.Spec.Alt
+  alias Norm.Spec.Union
 
   def exception(details) do
     %__MODULE__{message: msg(details)}
@@ -49,21 +52,52 @@ defmodule Norm.SpecError do
   defp format(val, indentation \\ 0)
 
   defp format({key, spec_or_schema}, i) do
-    format(key, i) <> " => " <> format(spec_or_schema, i + 1)
+    "{" <> format(key, i) <> ", " <> format(spec_or_schema, i + 1) <> "}"
   end
-
   defp format(atom, _) when is_atom(atom), do: ":#{atom}"
   defp format(str, _) when is_binary(str), do: ~s|"#{str}"|
   defp format(%Spec{predicate: pred}, _), do: "spec(#{pred})"
-
   defp format(%Schema{specs: specs}, i) do
+    f = fn {key, spec_or_schema}, i ->
+      format(key, i) <> " => " <> format(spec_or_schema, i + 1)
+    end
+
     specs =
+      specs
+      |> Enum.map(& f.(&1, i))
+      |> Enum.map(&pad(&1, (i + 1) * 2))
+      |> Enum.join("\n")
+
+    "%{\n" <> specs <> "\n" <> pad("}", i * 2)
+  end
+  defp format(%Collection{spec: spec}, i) do
+    "coll_of(#{format(spec, i)})"
+  end
+  defp format(%Alt{specs: specs}, i) do
+    formatted =
       specs
       |> Enum.map(&format(&1, i))
       |> Enum.map(&pad(&1, (i + 1) * 2))
       |> Enum.join("\n")
 
-    "%{\n" <> specs <> "\n" <> pad("}", i * 2)
+    if length(specs) > 0 do
+      "alt([\n#{formatted}\n" <> pad("])", i * 2)
+    else
+      "alt([])"
+    end
+  end
+  defp format(%Union{specs: specs}, i) do
+    formatted =
+      specs
+      |> Enum.map(&format(&1, i))
+      |> Enum.map(&pad(&1, (i + 1) * 2))
+      |> Enum.join("\n")
+
+    if length(specs) > 0 do
+      "one_of([\n#{formatted}\n" <> pad("])", i * 2)
+    else
+      "one_of([])"
+    end
   end
 
   defp pad(str, 0), do: str

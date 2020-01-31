@@ -89,6 +89,16 @@ defmodule Norm.SelectionTest do
       assert_raise Norm.SpecError, fn ->
         selection(schema(%{user: schema(%{age: spec(is_integer())})}), foo: [:name])
       end
+
+      assert_raise Norm.SpecError, fn ->
+        users = schema(%{
+          users: coll_of(schema(%{age: spec(is_integer)})),
+          alts: alt([foo: :foo, bar: :bar]),
+          one_of: one_of([:foo, :bar]),
+          map_of: map_of(spec(is_atom), spec(is_atom))
+        })
+        selection(users, [:other])
+      end
     end
 
     test "works with structs" do
