@@ -51,4 +51,12 @@ defmodule Norm.Spec.Union do
       end
     end
   end
+
+  defimpl Inspect do
+    import Inspect.Algebra
+
+    def inspect(union, opts) do
+      concat(["#Norm.OneOf<", to_doc(union.specs, opts), ">"])
+    end
+  end
 end

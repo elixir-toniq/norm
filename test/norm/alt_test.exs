@@ -20,4 +20,13 @@ defmodule Norm.Spec.AltTest do
       end
     end
   end
+
+  describe "inspect" do
+    test "alts" do
+      spec = alt(s: spec(is_binary()), i: spec(is_integer()))
+
+      assert inspect(spec) ==
+               "#Norm.Alt<[s: #Norm.Spec<is_binary()>, i: #Norm.Spec<is_integer()>]>"
+    end
+  end
 end

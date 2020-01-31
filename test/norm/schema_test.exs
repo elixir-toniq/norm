@@ -222,4 +222,15 @@ defmodule Norm.SchemaTest do
       end
     end
   end
+
+  describe "inspect" do
+    test "map schemas" do
+      s = schema(%{name: spec(is_binary()), age: spec(is_integer())})
+      assert inspect(s) == "#Norm.Schema<%{age: #Norm.Spec<is_integer()>, name: #Norm.Spec<is_binary()>}>"
+    end
+
+    test "struct schema" do
+      assert inspect(User.s()) == "#Norm.Schema<%Norm.SchemaTest.User{age: #Norm.Spec<is_integer() and &(&1 >= 0)>, email: #Norm.Spec<is_binary()>, name: #Norm.Spec<is_binary()>}>"
+    end
+  end
 end

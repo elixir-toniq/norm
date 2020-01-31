@@ -54,4 +54,12 @@ defmodule Norm.Spec.Alt do
       end
     end
   end
+
+  defimpl Inspect do
+    import Inspect.Algebra
+
+    def inspect(alt, opts) do
+      concat(["#Norm.Alt<", to_doc(alt.specs, opts), ">"])
+    end
+  end
 end

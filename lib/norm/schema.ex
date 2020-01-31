@@ -136,4 +136,17 @@ defmodule Norm.Schema do
       end
     end
   end
+
+  defimpl Inspect do
+    import Inspect.Algebra
+
+    def inspect(schema, opts) do
+      map = if schema.struct do
+        struct(schema.struct, schema.specs)
+      else
+        schema.specs
+      end
+      concat(["#Norm.Schema<", to_doc(map, opts), ">"])
+    end
+  end
 end

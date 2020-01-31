@@ -191,4 +191,11 @@ defmodule Norm.SelectionTest do
       end
     end
   end
+
+  describe "inspect" do
+    test "single selection" do
+      assert inspect(selection(user_schema())) == "#Norm.Selection<%{required: [:name, :email, :age], schema: #Norm.Schema<%{age: #Norm.Spec<is_integer() and &(&1 > 0)>, email: #Norm.Spec<is_binary() and &(&1 =~ ~r\"@\")>, name: #Norm.Spec<is_binary()>}>}>"
+      assert inspect(selection(user_schema(), [:name])) == "#Norm.Selection<%{required: [:name], schema: #Norm.Schema<%{age: #Norm.Spec<is_integer() and &(&1 > 0)>, email: #Norm.Spec<is_binary() and &(&1 =~ ~r\"@\")>, name: #Norm.Spec<is_binary()>}>}>"
+    end
+  end
 end

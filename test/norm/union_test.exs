@@ -40,4 +40,9 @@ defmodule Norm.UnionTest do
       end
     end
   end
+
+  test "inspect" do
+    union = one_of([:foo, spec(is_binary())])
+    assert inspect(union) == "#Norm.OneOf<[:foo, #Norm.Spec<is_binary()>]>"
+  end
 end
