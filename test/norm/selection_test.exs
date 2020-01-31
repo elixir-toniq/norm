@@ -94,6 +94,35 @@ defmodule Norm.SelectionTest do
     test "works with structs" do
       assert %Event{} = conform!(%Event{data: %{type: :foo}}, selection(Event.s()))
     end
+
+    test "returns deeply nested errors" do
+      input = %{
+        data: %{
+          foo: :foo,
+          bar: %{
+            inner: :inner,
+          },
+          baz: %{}
+        }
+      }
+
+      s = schema(%{
+        data: schema(%{
+          foo: spec(& &1 == :foo),
+          bar: schema(%{
+            inner: spec(& &1 == :inner),
+          }),
+          baz: schema(%{
+            inner: spec(& &1 == :inner),
+          })
+        })
+      })
+
+      assert {:error, errors} = conform(input, selection(s))
+      assert errors == [
+        %{input: %{}, path: [:data, :baz, :inner], spec: ":required"}
+      ]
+    end
   end
 
   describe "generation" do
