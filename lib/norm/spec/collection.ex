@@ -118,4 +118,12 @@ defmodule Norm.Spec.Collection do
       end
     end
   end
+
+  defimpl Inspect do
+    import Inspect.Algebra
+
+    def inspect(coll_of, opts) do
+      concat(["#Norm.CollOf<", to_doc(coll_of.spec, opts), ">"])
+    end
+  end
 end

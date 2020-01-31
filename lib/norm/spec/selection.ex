@@ -160,4 +160,16 @@ defmodule Norm.Spec.Selection do
       end
     end
   end
+
+  defimpl Inspect do
+    import Inspect.Algebra
+
+    def inspect(selection, opts) do
+      map = %{
+        schema: selection.schema,
+        required: selection.required
+      }
+      concat(["#Norm.Selection<", to_doc(map, opts), ">"])
+    end
+  end
 end
