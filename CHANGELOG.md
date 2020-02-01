@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## 0.10.3 (January 31, 2020)
+* [2aa1173](https://github.com/keathley/norm/commit/2aa1173a370d6ba37bca193dc46ef1e302c9216b) Stop selection from duplicating errors with nested schemas - Chris Keathley
+* [9ba0261](https://github.com/keathley/norm/commit/9ba0261e91b200fd6807b64e820c4b7490fbc2eb) Merge branch 'return-single-error-from-selection' - Chris Keathley
+* [f58631b](https://github.com/keathley/norm/commit/f58631beda926762a01c4e2d995b2d621ecb66a3) Implement inspect for the other structs in Norm - Chris Keathley
+* [0997e06](https://github.com/keathley/norm/commit/0997e06edd259eae5267abc806fb1a0d59bc087e) Merge branch 'implement-inspect' - Chris Keathley
+* [3f88509](https://github.com/keathley/norm/commit/3f8850912dc07ed06895e36d3419af1e77ef23a8) Allow ellision of parens on single arity functions - Chris Keathley
+* [5be61af](https://github.com/keathley/norm/commit/5be61afc8f5b47297685bf3dcbc8e9bece0b494d) Merge branch 'allow-predicates-without-parens' - Chris Keathley
+* [6bf487d](https://github.com/keathley/norm/commit/6bf487de2151fdb61c62210e22cefd4a96a41ea9) Return errors from selections correctly - Chris Keathley
+* [6a5c8b2](https://github.com/keathley/norm/commit/6a5c8b2bc97d49b406b68074406dd205211c21f3) Merge branch 'error-if-selection-specifies-key-not-in-schema' - Chris Keathley
+* [31ad460](https://github.com/keathley/norm/commit/31ad460710d88d01189188d1f38b78700891362c) Allow structs to conform with default keys - Chris Keathley
+* [ee46655](https://github.com/keathley/norm/commit/ee466552e423d083a1ae2ffef7d114e56038040f) Merge branch 'allow-struct-schemas-to-use-defaults' - Chris Keathley
+* [1c950e1](https://github.com/keathley/norm/commit/1c950e1aac7d510c67ca712a97e0e2bf521419b9) Always return selection errors - Chris Keathley
+* [f99a122](https://github.com/keathley/norm/commit/f99a1229f8c109ee16493aa48f319287725f13f0) Merge branch 'always-return-selection-errors' - Chris Keathley
+
 ## 0.10.2 (January 20, 2020)
 
 * [1a5e6ce](https://github.com/keathley/norm/commit/1a5e6ce7b0ace069342885e71b9fdfffd0fe0ee6) Handle selections around structs with nested maps - Chris Keathley
