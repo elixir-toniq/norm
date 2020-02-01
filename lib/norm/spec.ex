@@ -89,37 +89,24 @@ defmodule Norm.Spec do
 
   if Code.ensure_loaded?(StreamData) do
     defimpl Norm.Generatable do
-      @supported_primitives [
-        :is_atom,
-        :is_binary,
-        :is_bitstring,
-        :is_boolean,
-        :is_float,
-        :is_integer
-      ]
-
       def gen(%{generator: gen, predicate: pred}) do
-        predicate =
-          Enum.find(@supported_primitives, {:error, pred}, fn predicate ->
-            gen == predicate
-          end)
-
-        generator_from_predicate(predicate)
+        case build_generator(gen) do
+          nil       -> {:error, pred}
+          generator -> {:ok, generator}
+        end
       end
 
-      defp generator_from_predicate({:error, predicate}), do: {:error, predicate}
-
-      defp generator_from_predicate(:is_atom),
-        do: {:ok, apply(StreamData, :atom, [:alphanumeric])}
-
-      defp generator_from_predicate(predicate) do
-        data_type =
-          predicate
-          |> Atom.to_string()
-          |> String.slice(3..-1)
-          |> String.to_atom()
-
-        {:ok, apply(StreamData, data_type, [])}
+      defp build_generator(gen) do
+        case gen do
+          :is_atom      -> StreamData.atom(:alphanumeric)
+          :is_binary    -> StreamData.binary()
+          :is_bitstring -> StreamData.bitstring()
+          :is_boolean   -> StreamData.boolean()
+          :is_float     -> StreamData.float()
+          :is_integer   -> StreamData.integer()
+          :is_list      -> StreamData.list_of(StreamData.term())
+          _             -> nil
+        end
       end
     end
   end
