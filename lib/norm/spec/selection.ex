@@ -73,21 +73,23 @@ defmodule Norm.Spec.Selection do
     alias Norm.Conformer
     alias Norm.Conformer.Conformable
 
+    def conform(_, input, path) when not is_map(input) do
+      {:error, [Conformer.error(path, input, "not a map")]}
+    end
+
     def conform(%{required: required, schema: schema}, input, path) do
-      with {:ok, conformed} <- Conformable.conform(schema, input, path) do
-        errors = ensure_keys(required, conformed, path, [])
+      case Conformable.conform(schema, input, path) do
+        {:ok, conformed} ->
+          errors = ensure_keys(required, conformed, path, [])
+          if Enum.any?(errors) do
+            {:error, errors}
+          else
+            {:ok, conformed}
+          end
 
-        if Enum.any?(errors) do
-          errors =
-            errors
-            |> Enum.flat_map(fn {_, errors} -> errors end)
-
-          {:error, errors}
-        else
-          # We can just return the conformed values here because we know that
-          # everything is in there.
-          {:ok, conformed}
-        end
+        {:error, conforming_errors} ->
+          errors = ensure_keys(required, input, path, [])
+          {:error, conforming_errors ++ errors}
       end
     end
 
@@ -117,7 +119,7 @@ defmodule Norm.Spec.Selection do
       if Map.has_key?(conformed, key) do
         :ok
       else
-        {:error, [Conformer.error(path ++ [key], conformed, ":required")]}
+        Conformer.error(path ++ [key], conformed, ":required")
       end
     end
   end
