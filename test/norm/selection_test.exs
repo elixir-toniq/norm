@@ -77,6 +77,18 @@ defmodule Norm.SelectionTest do
       refute valid?(%{name: "chris", age: 31}, selection(user_schema()))
     end
 
+    test "always returns missing keys even if the schema errors" do
+      s = schema(%{
+        a: coll_of(selection(schema(%{b: spec(is_boolean())}))),
+        c: spec(is_boolean())
+      })
+      assert {:error, errors} = conform(%{a: [%{b: "no_bool"}]}, selection(s, [:c]))
+      assert errors == [
+        %{input: "no_bool", path: [:a, 0, :b], spec: "is_boolean()"},
+        %{input: %{a: [%{b: "no_bool"}]}, path: [:c], spec: ":required"},
+      ]
+    end
+
     test "errors if there are keys that aren't specified in a schema" do
       assert_raise Norm.SpecError, fn ->
         selection(schema(%{age: spec(is_integer())}), [:name])
