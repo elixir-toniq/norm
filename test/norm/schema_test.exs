@@ -171,6 +171,15 @@ defmodule Norm.SchemaTest do
       assert errors == [%{spec: "is_binary()", input: 23, path: [:name]}]
     end
 
+    defmodule Movie do
+      defstruct directors: [:foo, :bar, :baz], producers: []
+    end
+
+    test "allows defaults" do
+      spec = schema(%Movie{})
+      assert movie = conform(%Movie{}, spec)
+    end
+
     property "can generate proper structs" do
       check all(user <- gen(User.s())) do
         assert match?(%User{}, user)
@@ -186,6 +195,12 @@ defmodule Norm.SchemaTest do
         assert is_integer(user.age) and user.age >= 0
         assert is_nil(user.name)
         assert is_nil(user.email)
+      end
+
+      check all(movie <- gen(schema(%Movie{producers: spec(is_list())}))) do
+        assert match?(%Movie{}, movie)
+        assert movie.directors == [:foo, :bar, :baz]
+        assert is_list(movie.producers)
       end
     end
   end

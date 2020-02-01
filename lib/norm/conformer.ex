@@ -50,9 +50,16 @@ defmodule Norm.Conformer do
     # Defines a conformable type. Must take the type, current path, and input and
     # return an success tuple with the conformed data or a list of errors.
 
+    # @fallback_to_any true
     def conform(spec, path, input)
   end
 end
+
+# defimpl Norm.Conformer.Conformable, for: Any do
+#   def conform(_thing, input, _path) do
+#     {:ok, input}
+#   end
+# end
 
 defimpl Norm.Conformer.Conformable, for: Atom do
   alias Norm.Conformer

@@ -6,13 +6,15 @@ defmodule Norm.Schema do
 
   defstruct specs: %{}, struct: nil
 
-  # If we're building a schema from a struct then we need to add a default spec
-  # for each key that only checks for presence. This allows users to specify
-  # struct types without needing to specify specs for each key
   def build(%{__struct__: name} = struct) do
+    # If we're building a schema from a struct then we need to reject any keys with
+    # values that don't implement the conformable protocol. This allows users to specify
+    # struct types without needing to specify specs for each key
     specs =
       struct
       |> Map.from_struct()
+      |> Enum.reject(fn {_, value} -> Norm.Conformer.Conformable.impl_for(value) == nil end)
+      |> Enum.into(%{})
 
     %Schema{specs: specs, struct: name}
   end
