@@ -1,7 +1,5 @@
-defmodule Norm.UnionTest do
-  use ExUnit.Case, async: true
-  import ExUnitProperties, except: [gen: 1]
-  import Norm
+defmodule Norm.Core.AnyOfTest do
+  use Norm.Case, async: true
 
   describe "conforming" do
     test "returns the first match" do

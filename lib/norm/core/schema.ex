@@ -1,4 +1,4 @@
-defmodule Norm.Schema do
+defmodule Norm.Core.Schema do
   @moduledoc false
   # Provides the definition for schemas
 
@@ -58,7 +58,7 @@ defmodule Norm.Schema do
     end
 
     # conforming a map.
-    def conform(%Norm.Schema{specs: specs}, input, path) do
+    def conform(%Schema{specs: specs}, input, path) do
       if Map.get(input, :__struct__) != nil do
         with {:ok, conformed} <- check_specs(specs, Map.from_struct(input), path) do
           {:ok, struct(input.__struct__, conformed)}

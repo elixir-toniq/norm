@@ -1,6 +1,5 @@
-defmodule Norm.SelectionTest do
-  use ExUnit.Case, async: true
-  import Norm
+defmodule Norm.Core.SelectionTest do
+  use Norm.Case, async: true
 
   defmodule Event do
     import Norm

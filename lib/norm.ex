@@ -336,18 +336,16 @@ defmodule Norm do
   alias Norm.Conformer
   alias Norm.Generatable
   alias Norm.Generator
-  alias Norm.Spec
-
-  alias Norm.Spec.{
-    Alt,
-    Selection,
-    Union,
-    Collection
-  }
-
-  alias Norm.Schema
   alias Norm.MismatchError
   alias Norm.GeneratorError
+  alias Norm.Core.{
+    Alt,
+    AnyOf,
+    Collection,
+    Schema,
+    Selection,
+    Spec,
+  }
 
   @doc false
   defmacro __using__(_) do
@@ -478,11 +476,7 @@ defmodule Norm do
       {:error, [%{spec: "is_atom()", input: 21, path: []}, %{spec: "is_binary()", input: 21, path: []}]}
   """
   defmacro spec(predicate) do
-    spec = Spec.build(predicate)
-
-    quote do
-      unquote(spec)
-    end
+    Spec.build(predicate)
   end
 
   @doc ~S"""
@@ -577,7 +571,7 @@ defmodule Norm do
       :alice
   """
   def one_of(specs) when is_list(specs) do
-    Union.new(specs)
+    AnyOf.new(specs)
   end
 
   @doc ~S"""

@@ -1,4 +1,4 @@
-defmodule Norm.Spec.Collection do
+defmodule Norm.Core.Collection do
   @moduledoc false
 
   defstruct spec: nil, opts: []

@@ -56,9 +56,9 @@ defmodule NormTest do
       assert errors == [%{spec: ":required", input: %{age: 31}, path: [1, :name]}]
     end
 
-    @tag :skip
     test "can spec keyword lists" do
-      flunk("Not Implemented")
+      list = coll_of(one_of([name: spec(is_atom())]))
+      assert conform!([name: :foo], list) == [name: :foo]
     end
   end
 

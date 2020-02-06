@@ -1,7 +1,5 @@
-defmodule Norm.SpecTest do
-  use ExUnit.Case, async: true
-  import Norm
-  import ExUnitProperties, except: [gen: 1]
+defmodule Norm.Core.SpecTest do
+  use Norm.Case, async: true
 
   defmodule Foo do
     def hello?(str), do: str == "hello"

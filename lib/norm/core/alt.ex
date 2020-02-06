@@ -1,4 +1,4 @@
-defmodule Norm.Spec.Alt do
+defmodule Norm.Core.Alt do
   @moduledoc false
 
   defstruct specs: []

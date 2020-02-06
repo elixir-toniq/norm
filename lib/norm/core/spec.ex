@@ -1,10 +1,10 @@
-defmodule Norm.Spec do
+defmodule Norm.Core.Spec do
   @moduledoc false
   # Provides a struct to encapsulate specs
 
   alias __MODULE__
 
-  alias Norm.Spec.{
+  alias Norm.Core.Spec.{
     And,
     Or
   }

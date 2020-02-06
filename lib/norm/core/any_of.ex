@@ -1,4 +1,4 @@
-defmodule Norm.Spec.Union do
+defmodule Norm.Core.AnyOf do
   @moduledoc false
   # Provides the struct for unions of specifications
 
