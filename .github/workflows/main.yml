@@ -1,0 +1,36 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  credo:
+    name: Credo
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Install OTP and Elixir
+        uses: actions/setup-elixir@v1
+        with:
+          otp-version: 22.1
+          elixir-version: 1.9.4
+
+      - run: mix deps.get
+      - run: mix compile
+      - run: mix credo
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Install OTP and Elixir
+        uses: actions/setup-elixir@v1
+        with:
+          otp-version: 22.1
+          elixir-version: 1.9.4
+
+      - run: mix deps.get
+      - run: MIX_ENV=test mix compile
+      - run: mix test
