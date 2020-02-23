@@ -13,7 +13,7 @@ defmodule Norm.Spec.Collection do
 
     def conform(%{spec: spec, opts: opts}, input, path) do
       with :ok <- check_enumerable(input, path, opts),
-           :ok <- check_map_of(input, path, opts),
+           :ok <- check_kind_of(input, path, opts),
            :ok <- check_distinct(input, path, opts),
            :ok <- check_counts(input, path, opts) do
         results =
@@ -22,10 +22,27 @@ defmodule Norm.Spec.Collection do
           |> Enum.map(fn {elem, i} -> Conformable.conform(spec, elem, path ++ [i]) end)
           |> Conformer.group_results()
 
+        into = cond do
+          opts[:into] ->
+            opts[:into]
+
+          is_list(input) ->
+            []
+
+          is_map(input) and Map.has_key?(input, :__struct__) ->
+            struct(input.__struct__)
+
+          is_map(input) ->
+            %{}
+
+          true ->
+            raise ArgumentError, "Cannot determine output type for collection"
+        end
+
         if Enum.any?(results.error) do
           {:error, results.error}
         else
-          {:ok, convert(results.ok, opts[:into])}
+          {:ok, convert(results.ok, into)}
         end
       end
     end
@@ -71,18 +88,19 @@ defmodule Norm.Spec.Collection do
       end
     end
 
-    defp check_map_of(input, path, opts) do
+    defp check_kind_of(input, path, opts) do
       cond do
-        # if coll_of was used, accept every kind of list
-        opts[:into] == [] ->
+        # If kind is nil we assume it doesn't matter
+        opts[:kind] == nil ->
           :ok
 
-        # in case of map_of, check the format of the enumerable
-        Enum.all?(input, &match?({_, _}, &1)) ->
+        # If we have a `:kind` and it returns true we pass the spec
+        opts[:kind].(input) ->
           :ok
 
+        # Otherwise return an error
         true ->
-          {:error, [Conformer.error(path, input, "not a map")]}
+          {:error, [Conformer.error(path, input, "does not match kind: #{inspect opts[:kind]}")]}
       end
     end
   end
@@ -113,7 +131,8 @@ defmodule Norm.Spec.Collection do
 
       def into(list_gen, opts) do
         StreamData.bind(list_gen, fn list ->
-          StreamData.constant(Enum.into(list, opts[:into]))
+          # We assume that if we don't have an `into` specified then its a list
+          StreamData.constant(Enum.into(list, opts[:into] || []))
         end)
       end
     end
