@@ -583,16 +583,33 @@ defmodule Norm do
   @doc ~S"""
   Specifies a generic collection. Collections can be any enumerable type.
 
+  `coll_of` takes multiple arguments:
+
+  * `:kind` - predicate function the kind of collection being conformed
+  * `:distinct` - boolean value for specifying if the collection should have distinct elements
+  * `:min_count` - Minimum element count
+  * `:max_count` - Maximum element count
+  * `:into` - The output collection the input will be conformed into. If not specified then the input type will be used.
+
   ## Examples
 
       iex> conform!([:a, :b, :c], coll_of(spec(is_atom())))
       [:a, :b, :c]
+      iex> conform!([:a, :b, :c], coll_of(spec(is_atom), into: MapSet.new()))
+      MapSet.new([:a, :b, :c])
+      iex> conform!(MapSet.new([:a, :b, :c]), coll_of(spec(is_atom)))
+      MapSet.new([:a, :b, :c])
+      iex> conform!(%{a: 1, b: 2, c: 3}, coll_of({spec(is_atom), spec(is_integer)}))
+      %{a: 1, b: 2, c: 3}
+      iex> conform!([1, 2], coll_of(spec(is_integer), min_count: 1))
+      [1, 2]
   """
   @default_opts [
+    kind: nil,
     distinct: false,
     min_count: 0,
     max_count: :infinity,
-    into: [],
+    into: nil,
   ]
 
   def coll_of(spec, opts \\ []) do
@@ -613,7 +630,7 @@ defmodule Norm do
       %{a: 1, b: 2, c: 3}
   """
   def map_of(kpred, vpred, opts \\ []) do
-    opts = Keyword.merge(opts, into: %{})
+    opts = Keyword.merge(opts, [into: %{}, kind: &is_map/1])
     coll_of({kpred, vpred}, opts)
   end
 

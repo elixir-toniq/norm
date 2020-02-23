@@ -166,7 +166,7 @@ defmodule NormTest do
 
       assert {:error, errors} = conform([1, 2, 3], spec)
       assert errors == [
-        %{spec: "not a map", input: [1, 2, 3], path: []}
+        %{spec: "does not match kind: &:erlang.is_map/1", input: [1, 2, 3], path: []}
       ]
     end
 
