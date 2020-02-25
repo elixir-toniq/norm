@@ -1,7 +1,5 @@
-defmodule Norm.SchemaTest do
-  use ExUnit.Case, async: true
-  import Norm
-  import ExUnitProperties, except: [gen: 1]
+defmodule Norm.Core.SchemaTest do
+  use Norm.Case, async: true
 
   defmodule User do
     import Norm
@@ -77,8 +75,8 @@ defmodule Norm.SchemaTest do
     assert {:error, errors} = conform(%{}, user_or_other)
 
     assert errors == [
-      %{spec: "Norm.SchemaTest.User", input: %{}, path: [:user]},
-      %{spec: "Norm.SchemaTest.OtherUser", input: %{}, path: [:other]}
+      %{spec: "Norm.Core.SchemaTest.User", input: %{}, path: [:user]},
+      %{spec: "Norm.Core.SchemaTest.OtherUser", input: %{}, path: [:other]}
     ]
   end
 
@@ -131,7 +129,7 @@ defmodule Norm.SchemaTest do
       assert {:error, errors} = conform(input, schema(%User{}))
 
       assert errors == [
-        %{spec: "Norm.SchemaTest.User", input: %{age: 31, email: "c@keathley.io", name: "chris"}, path: []}
+        %{spec: "Norm.Core.SchemaTest.User", input: %{age: 31, email: "c@keathley.io", name: "chris"}, path: []}
       ]
     end
 
@@ -141,7 +139,7 @@ defmodule Norm.SchemaTest do
       assert {:error, errors} = conform(input, schema(%OtherUser{}))
 
       assert errors == [
-        %{spec: "Norm.SchemaTest.OtherUser", input: %Norm.SchemaTest.User{age: 31, email: "c@keathley.io", name: "chris"}, path: []}
+        %{spec: "Norm.Core.SchemaTest.OtherUser", input: %User{age: 31, email: "c@keathley.io", name: "chris"}, path: []}
       ]
     end
 
@@ -245,7 +243,7 @@ defmodule Norm.SchemaTest do
     end
 
     test "struct schema" do
-      assert inspect(User.s()) == "#Norm.Schema<%Norm.SchemaTest.User{age: #Norm.Spec<is_integer() and &(&1 >= 0)>, email: #Norm.Spec<is_binary()>, name: #Norm.Spec<is_binary()>}>"
+      assert inspect(User.s()) == "#Norm.Schema<%Norm.Core.SchemaTest.User{age: #Norm.Spec<is_integer() and &(&1 >= 0)>, email: #Norm.Spec<is_binary()>, name: #Norm.Spec<is_binary()>}>"
     end
   end
 end

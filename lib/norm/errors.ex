@@ -32,11 +32,11 @@ end
 
 defmodule Norm.SpecError do
   defexception [:message]
-  alias Norm.Spec
-  alias Norm.Schema
-  alias Norm.Spec.Collection
-  alias Norm.Spec.Alt
-  alias Norm.Spec.Union
+  alias Norm.Core.Spec
+  alias Norm.Core.Schema
+  alias Norm.Core.Collection
+  alias Norm.Core.Alt
+  alias Norm.Core.AnyOf
 
   def exception(details) do
     %__MODULE__{message: msg(details)}
@@ -86,7 +86,7 @@ defmodule Norm.SpecError do
       "alt([])"
     end
   end
-  defp format(%Union{specs: specs}, i) do
+  defp format(%AnyOf{specs: specs}, i) do
     formatted =
       specs
       |> Enum.map(&format(&1, i))

@@ -1,6 +1,5 @@
-defmodule Norm.Spec.CollectionTest do
-  use ExUnit.Case, async: true
-  import Norm
+defmodule Norm.Core.CollectionTest do
+  use Norm.Case, async: true
 
   test "inspect" do
     spec = coll_of(spec(is_atom()))

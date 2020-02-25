@@ -1,7 +1,7 @@
-defmodule Norm.Spec.And do
+defmodule Norm.Core.Spec.And do
   @moduledoc false
 
-  alias Norm.Spec
+  alias Norm.Core.Spec
   alias __MODULE__
 
   defstruct [:left, :right]

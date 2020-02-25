@@ -1,6 +1,5 @@
-defmodule Norm.Spec.AltTest do
-  use ExUnit.Case, async: true
-  import Norm
+defmodule Norm.Core.AltTest do
+  use Norm.Case, async: true
 
   describe "generation" do
     test "returns one of the options" do

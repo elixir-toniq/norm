@@ -1,4 +1,4 @@
-defmodule Norm.Spec.Or do
+defmodule Norm.Core.Spec.Or do
   @moduledoc false
 
   defstruct [:left, :right]

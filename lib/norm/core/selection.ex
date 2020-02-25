@@ -1,10 +1,10 @@
-defmodule Norm.Spec.Selection do
+defmodule Norm.Core.Selection do
   @moduledoc false
   # Provides the definition for selections
 
   defstruct required: [], schema: nil
 
-  alias Norm.Schema
+  alias Norm.Core.Schema
   alias Norm.SpecError
 
   def new(schema, selectors) do
@@ -156,7 +156,7 @@ defmodule Norm.Spec.Selection do
       defp to_gen(key, schema, generator) do
         # Its safe to just get the spec because at this point we *know* that the
         # keys that have been selected are in the schema.
-        with {:ok, g} <- Generatable.gen(Norm.Schema.spec(schema, key)) do
+        with {:ok, g} <- Generatable.gen(Norm.Core.Schema.spec(schema, key)) do
           Map.put(generator, key, g)
         end
       end
