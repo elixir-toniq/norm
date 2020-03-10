@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 0.10.4 (March 10, 2020)
+
+* [ffe49b3](https://github.com/keathley/norm/commit/ffe49b39dc3cf89c659e91f6958f938b5c6de5c1) Use GitHub CI - Wojtek Mach
+* [1fa941b](https://github.com/keathley/norm/commit/1fa941b496463b682b18dcb8c31aedf4e50d5b60) Conform collection values using the correct types - Chris Keathley
+* [3313b1e](https://github.com/keathley/norm/commit/3313b1eae8398c2d61daab8d64f7d4af7a522f82) Rearrange Norm's internal AST directory - Chris Keathley
+* [e6ae160](https://github.com/keathley/norm/commit/e6ae160f23e382a30edc00e678b4c176025031cd) don't crash if using nested selection with non-map input - Chris Keathley
+
 ## 0.10.3 (January 31, 2020)
 * [2aa1173](https://github.com/keathley/norm/commit/2aa1173a370d6ba37bca193dc46ef1e302c9216b) Stop selection from duplicating errors with nested schemas - Chris Keathley
 * [9ba0261](https://github.com/keathley/norm/commit/9ba0261e91b200fd6807b64e820c4b7490fbc2eb) Merge branch 'return-single-error-from-selection' - Chris Keathley
