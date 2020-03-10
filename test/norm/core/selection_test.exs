@@ -48,6 +48,8 @@ defmodule Norm.Core.SelectionTest do
       assert errors == [%{spec: ":required", input: %{name: "chris"}, path: [:user, :age]}]
       assert {:error, errors} = conform(%{fauxuser: %{age: 31}}, selection)
       assert errors == [%{spec: ":required", input: %{fauxuser: %{age: 31}}, path: [:user]}]
+      assert {:error, errors} = conform(%{user: nil}, selection)
+      assert errors == [%{input: nil, path: [:user], spec: "not a map"}]
     end
 
     test "works with nested selections"  do

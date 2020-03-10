@@ -115,6 +115,7 @@ defmodule Norm.Core.Selection do
       end
     end
 
+    defp ensure_key(_key, conformed, _path) when not is_map(conformed), do: :ok
     defp ensure_key(key, conformed, path) do
       if Map.has_key?(conformed, key) do
         :ok
