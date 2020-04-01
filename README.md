@@ -1,5 +1,7 @@
 # Norm
 
+<!-- MDOC !-->
+
 Norm is a system for specifying the structure of data. It can be used for
 validation and for generation of data. Norm does not provide any set of
 predicates and instead allows you to re-use any of your existing
@@ -51,21 +53,6 @@ defmodule Colors do
   def rgb_to_hex(r, g, b) do
     # ...
   end
-end
-```
-
-## Installation
-
-Add `norm` to your list of dependencies in `mix.exs`. If you'd like to use
-Norm's generator capabilities then you'll also need to include StreamData
-as a dependency.
-
-```elixir
-def deps do
-  [
-    {:stream_data, "~> 0.4"},
-    {:norm, "~> 0.10"}
-  ]
 end
 ```
 
@@ -137,6 +124,27 @@ result_spec = one_of([
 
 {:ok, "alice"} = conform!(User.get_name(123), result_spec)
 {:error, "user does not exist"} = conform!(User.get_name(-42), result_spec)
+```
+
+### Collections
+
+Norm can define collections of values using `coll_of`.
+
+```elixir
+[1, 2, 3] = conform!([1,2,3], coll_of(spec(is_integer)))
+```
+
+Collections can take a number of options:
+
+* `:kind` - predicate function the kind of collection being conformed
+* `:distinct` - boolean value for specifying if the collection should have distinct elements
+* `:min_count` - Minimum element count
+* `:max_count` - Maximum element count
+* `:into` - The output collection the input will be conformed into. If not specified then the input type will be used.
+
+```elixir
+conform!([:a, :b, :c], coll_of(spec(is_atom), into: MapSet.new()))
+# => #MapSet<[:a, :b, :c]>
 ```
 
 ### Schemas
@@ -427,6 +435,23 @@ end
 If the arguments for `rgb_to_hex` don't conform to the specification or if
 `rgb_to_hex` does not return a value that conforms to `hex` then an error will
 be raised.
+
+<!-- MDOC !-->
+
+## Installation
+
+Add `norm` to your list of dependencies in `mix.exs`. If you'd like to use
+Norm's generator capabilities then you'll also need to include StreamData
+as a dependency.
+
+```elixir
+def deps do
+  [
+    {:stream_data, "~> 0.4"},
+    {:norm, "~> 0.10"}
+  ]
+end
+```
 
 ## Should I use this?
 
