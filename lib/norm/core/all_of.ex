@@ -12,6 +12,7 @@ defmodule Norm.Core.AllOf do
     alias Norm.Conformer.Conformable
 
     def conform(%{specs: specs}, input, path) do
+      # TODO - this needs to reduce over the value instead of mapping
       result =
         specs
         |> Enum.map(fn spec -> Conformable.conform(spec, input, path) end)

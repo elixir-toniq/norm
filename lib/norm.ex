@@ -11,6 +11,7 @@ defmodule Norm do
   alias Norm.GeneratorError
   alias Norm.Core.{
     Alt,
+    AllOf,
     AnyOf,
     Collection,
     Schema,
@@ -243,6 +244,16 @@ defmodule Norm do
   """
   def one_of(specs) when is_list(specs) do
     AnyOf.new(specs)
+  end
+
+  @doc """
+
+  ## Examples
+      iex> conform!("chris", all_of([spec(is_binary), spec(String.starts_with?("c"))]))
+      "chris"
+  """
+  def all_of(specs) when is_list(specs) do
+    AllOf.new(specs)
   end
 
   @doc ~S"""
