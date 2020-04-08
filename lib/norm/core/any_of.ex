@@ -24,6 +24,12 @@ defmodule Norm.Core.AnyOf do
         {:error, List.flatten(result.error)}
       end
     end
+
+    def valid?(%{specs: specs}, input, path) do
+      specs
+      |> Stream.map(fn spec -> Conformable.valid?(spec, input, path) end)
+      |> Enum.all?(& &1)
+    end
   end
 
   if Code.ensure_loaded?(StreamData) do

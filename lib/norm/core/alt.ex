@@ -27,6 +27,12 @@ defmodule Norm.Core.Alt do
         {:error, List.flatten(result.error)}
       end
     end
+
+    def valid?(%{specs: specs}, input, path) do
+      specs
+      |> Stream.map(fn {name, spec} -> Conformable.valid?(spec, input, path ++ [name]) end)
+      |> Enum.any?(& &1)
+    end
   end
 
   if Code.ensure_loaded?(StreamData) do
