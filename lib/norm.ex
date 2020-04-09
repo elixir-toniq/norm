@@ -76,10 +76,7 @@ defmodule Norm do
       false
   """
   def valid?(input, spec) do
-    case Conformer.conform(spec, input) do
-      {:ok, _} -> true
-      {:error, _} -> false
-    end
+    Conformer.valid?(spec, input)
   end
 
   @doc ~S"""
