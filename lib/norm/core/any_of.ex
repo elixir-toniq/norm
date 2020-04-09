@@ -28,7 +28,7 @@ defmodule Norm.Core.AnyOf do
     def valid?(%{specs: specs}, input, path) do
       specs
       |> Stream.map(fn spec -> Conformable.valid?(spec, input, path) end)
-      |> Enum.all?(& &1)
+      |> Enum.any?(& &1)
     end
   end
 
