@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.11.0 (April 11, 2020)
+
+* Add more primitive generators
+* Fix formatting error when selecting unknown keys in a schema
+* contracts no longer require predicates to include parens
+
 ## 0.10.4 (March 10, 2020)
 
 * [ffe49b3](https://github.com/keathley/norm/commit/ffe49b39dc3cf89c659e91f6958f938b5c6de5c1) Use GitHub CI - Wojtek Mach
