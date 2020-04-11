@@ -51,6 +51,7 @@ defmodule Norm.Contract do
 
   @doc false
   defmacro def(call, expr) do
+    call = normalize_call(call)
     quote do
       if unquote(fa(call)) in @norm_contracts do
         unless Module.defines?(__MODULE__, unquote(fa(call))) do
@@ -165,4 +166,7 @@ defmodule Norm.Contract do
     {name, _meta, args} = call
     {name, length(args)}
   end
+
+  defp normalize_call({name, meta, nil}), do: {name, meta, []}
+  defp normalize_call({name, meta, args}), do: {name, meta, args}
 end
