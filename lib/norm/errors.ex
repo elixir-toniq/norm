@@ -101,7 +101,7 @@ defmodule Norm.SpecError do
       "one_of([])"
     end
   end
-  defp format(val, i) do
+  defp format(val, _i) do
     inspect(val)
   end
 
