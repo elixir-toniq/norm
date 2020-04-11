@@ -112,6 +112,11 @@ defmodule Norm.Core.SelectionTest do
         })
         selection(users, [:other])
       end
+
+      assert_raise Norm.SpecError, fn ->
+        s = schema(%{count: spec(is_integer() and (& &1 > 0) or is_binary)})
+        selection(s, [:incorrect_key])
+      end
     end
 
     test "works with structs" do
