@@ -69,4 +69,35 @@ defmodule Norm.ContractTest do
       end
     end
   end
+
+  test "function definition without parentheses" do
+    defmodule WithoutParentheses do
+      use Norm
+
+      @contract fun() :: spec(is_integer())
+      def fun do
+        42
+      end
+    end
+
+    assert WithoutParentheses.fun() == 42
+  end
+
+  test "non-contract function definition without parentheses" do
+    defmodule WithoutParentheses2 do
+      use Norm
+
+      @contract fun(int :: spec(is_integer())) :: spec(is_integer())
+      def fun(int) do
+        int * 2
+      end
+
+      def other do
+        "Hello, world!"
+      end
+    end
+
+    assert WithoutParentheses2.fun(50) == 100
+    assert WithoutParentheses2.other() == "Hello, world!"
+  end
 end
