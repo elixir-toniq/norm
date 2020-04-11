@@ -139,14 +139,17 @@ defmodule Norm.Contract do
 
   ## Utilities
 
+  defp fix_call_parens({name, meta, nil}), do: {name, meta, []}
+  defp fix_call_parens({name, meta, args}), do: {name, meta, args}
+
   defp wrapper_call(call) do
-    {name, meta, args} = call
+    {name, meta, args} = fix_call_parens(call)
     args = for {_, index} <- Enum.with_index(args), do: Macro.var(:"arg#{index}", nil)
     {name, meta, args}
   end
 
   defp wrapper_body(call) do
-    {name, meta, args} = call
+    {name, meta, args} = fix_call_parens(call)
     args = for {_, index} <- Enum.with_index(args), do: Macro.var(:"arg#{index}", nil)
     {:"__#{name}_with_contract__", meta, args}
   end
@@ -162,7 +165,7 @@ defmodule Norm.Contract do
   end
 
   defp fa(call) do
-    {name, _meta, args} = call
+    {name, _meta, args} = fix_call_parens(call)
     {name, length(args)}
   end
 end
