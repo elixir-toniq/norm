@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.12.0 (May 12, 2020)
+
+* Added reflection and other improvements to contracts - Wojtek Mach
+
 ## 0.11.0 (April 11, 2020)
 
 * Add more primitive generators
