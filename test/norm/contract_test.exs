@@ -49,17 +49,6 @@ defmodule Norm.ContractTest do
     end
   end
 
-  test "bad arg" do
-    assert_raise ArgumentError, ~r/`arg :: spec`, got: `spec\(is_integer\(\)\)`/, fn ->
-      defmodule BadArg do
-        use Norm
-
-        @contract foo(spec(is_integer())) :: spec(is_integer())
-        def foo(n), do: n
-      end
-    end
-  end
-
   test "no function" do
     assert_raise ArgumentError, "contract for undefined function foo/0", fn ->
       defmodule NoFunction do
@@ -99,5 +88,21 @@ defmodule Norm.ContractTest do
 
     assert WithoutParentheses2.fun(50) == 100
     assert WithoutParentheses2.other() == "Hello, world!"
+  end
+
+  test "reflection" do
+    defmodule Reflection do
+      use Norm
+
+      def int(), do: spec(is_integer())
+
+      @contract foo(a :: int(), int()) :: int()
+      def foo(a, b), do: a + b
+    end
+
+    contract = Reflection.__contract__({:foo, 2})
+
+    assert inspect(contract) ==
+             "%Norm.Contract{args: [a: #Norm.Spec<is_integer()>, arg2: #Norm.Spec<is_integer()>], result: #Norm.Spec<is_integer()>}"
   end
 end
