@@ -426,6 +426,7 @@ defmodule Colors do
   def hex(), do: spec(is_binary() and &String.starts_with?(&1, "#"))
 
   @contract rgb_to_hex(r :: rgb(), g :: rgb(), b :: rgb()) :: hex()
+  @doc "Convert an RGB value to its CSS-style hexadecimal notation."
   def rgb_to_hex(r, g, b) do
     # ...
   end
@@ -435,6 +436,9 @@ end
 If the arguments for `rgb_to_hex` don't conform to the specification or if
 `rgb_to_hex` does not return a value that conforms to `hex` then an error will
 be raised.
+
+Note `@contract` must be placed _before_ `@doc` as above for `ExDoc` and
+`ExUnit.DocTest` to continue working as intended.
 
 <!-- MDOC !-->
 
