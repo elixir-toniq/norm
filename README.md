@@ -410,6 +410,34 @@ gen(age) |> StreamData.map(&Integer.to_string/1) |> Enum.take(5)
 This allows you to compose generators however you need to while keeping your
 generation co-located with the specification of the data.
 
+### Interoperability with Dialyzer
+
+Norm works well in combination with Dialyzer. `t:StreamData.t/0` is `@opaque`,
+however, requiring careful handling when using `with_gen/2` in a function to
+return a spec for re-use elsewhere. Consider `age` below:
+
+```elixir
+def age, do: with_gen(spec(is_integer() and &(&1 >= 0)), StreamData.integer(0..105))
+```
+
+By default, Dialyzer will warn:
+
+> The call Norm.with_gen(...) contains an opaque term in 2nd argument when
+> terms of different types are expected in these positions}.
+
+You may suppress this warning at the module or function level with the
+[`@dialyzer` module attribute][at-dialyzer]:
+
+```elixir
+# Set no_opaque for __MODULE__ only:
+@dialyzer :no_opaque
+
+# Set no_opaque for age/0 only:
+@dialyzer {:no_opaque, age: 0}
+```
+
+[at-dialyzer]: http://erlang.org/doc/man/dialyzer.html#requesting-or-suppressing-warnings-in-source-files
+
 ## Adding contracts to functions
 
 You can `conform` data wherever it makes sense to do so in your application.
