@@ -150,6 +150,10 @@ defmodule Norm do
     Spec.build(predicate)
   end
 
+  defmacro spec(predicate, message) do
+    Spec.build(predicate, message)
+  end
+
   @doc ~S"""
   Creates a re-usable schema. Schema's are open which means that all keys are
   optional and any non-specified keys are passed through without being conformed.

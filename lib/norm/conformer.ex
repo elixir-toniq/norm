@@ -3,6 +3,21 @@ defmodule Norm.Conformer do
   # This module provides an api for conforming values and a protocol for
   # conformable types
 
+  def conform(specs, input) when is_list(specs) do
+    Enum.reduce(specs, {}, fn s, acc ->
+      case acc do
+        {} ->
+          Norm.Conformer.Conformable.conform(s, input, [])
+
+        {:ok, _} ->
+          Norm.Conformer.Conformable.conform(s, input, [])
+
+        {:error, e} ->
+          {:error, e}
+      end
+    end)
+  end
+
   def conform(spec, input) do
     Norm.Conformer.Conformable.conform(spec, input, [])
   end
@@ -15,8 +30,12 @@ defmodule Norm.Conformer do
     |> update_in([:error], &List.flatten(&1))
   end
 
-  def error(path, input, msg) do
-    %{path: path, input: input, spec: msg}
+  def error(path, input, spec_msg) do
+    %{path: path, input: input, spec: spec_msg}
+  end
+
+  def error(path, input, spec_msg, validation_msg) do
+    %{path: path, input: input, spec: spec_msg, message: validation_msg}
   end
 
   def error_to_msg(%{path: path, input: input, spec: msg}) do
