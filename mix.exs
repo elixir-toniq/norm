@@ -31,7 +31,7 @@ defmodule Norm.MixProject do
   defp deps do
     [
       {:credo, "~> 1.3.1", only: [:dev, :test], runtime: false},
-      {:stream_data, "~> 0.4.3", optional: true, only: [:dev, :test]},
+      {:stream_data, "~> 0.5.0", optional: true, only: [:dev, :test]},
       {:ex_doc, "~> 0.19", only: [:dev, :test]}
     ]
   end
