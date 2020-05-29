@@ -52,9 +52,9 @@ defmodule Norm.Core.Selection do
   defp validate_selectors!(other), do: raise ArgumentError, "select expects a list of keys but received: #{inspect other}"
 
   defp assert_spec!(%Schema{}=schema, key) do
-    case Schema.spec(schema, key) do
-      nil -> raise SpecError, {:selection, key, schema}
-      spec -> spec
+    case Schema.key_present?(schema, key) do
+      false -> raise SpecError, {:selection, key, schema}
+      true -> Schema.spec(schema, key)
     end
   end
   defp assert_spec!(%__MODULE__{}, _key) do
