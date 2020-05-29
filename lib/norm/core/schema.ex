@@ -30,6 +30,11 @@ defmodule Norm.Core.Schema do
     |> Enum.at(0)
   end
 
+  def key_present?(schema, key) do
+    schema.specs
+    |> Enum.any?(fn {name, _} -> name == key end)
+  end
+
   defimpl Norm.Conformer.Conformable do
     alias Norm.Conformer
     alias Norm.Conformer.Conformable
