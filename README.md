@@ -24,7 +24,7 @@ user_schema = schema(%{
   })
 })
 
-input = %{user: %{name: "chris", age: 30, email: "c@keathley.io"}
+input = %{user: %{name: "chris", age: 30, email: "c@keathley.io"}}
 
 conform!(input, user_schema)
 => %{user: %{name: "chris", age: 30}}
