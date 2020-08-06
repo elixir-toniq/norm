@@ -1,7 +1,7 @@
 defmodule Norm.MixProject do
   use Mix.Project
 
-  @version "0.10.4"
+  @version "0.12.0"
 
   def project do
     [
@@ -30,8 +30,8 @@ defmodule Norm.MixProject do
 
   defp deps do
     [
-      {:credo, "~> 1.3.1", only: [:dev, :test], runtime: false},
-      {:stream_data, "~> 0.4.3", optional: true, only: [:dev, :test]},
+      {:credo, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:stream_data, "~> 0.5", optional: true},
       {:ex_doc, "~> 0.19", only: [:dev, :test]}
     ]
   end

@@ -112,10 +112,24 @@ defmodule Norm.Core.SelectionTest do
         })
         selection(users, [:other])
       end
+
+      assert_raise Norm.SpecError, fn ->
+        s = schema(%{count: spec(is_integer() and (& &1 > 0) or is_binary)})
+        selection(s, [:incorrect_key])
+      end
     end
 
     test "works with structs" do
       assert %Event{} = conform!(%Event{data: %{type: :foo}}, selection(Event.s()))
+
+      assert {:error, errors} = conform(%{typo: %Event{}}, selection(schema(%{event: schema(%Event{data: spec(is_atom)})})))
+      assert errors == [
+        %{input: %{typo: %Norm.Core.SelectionTest.Event{data: nil}}, path: [:event], spec: ":required"}
+      ]
+    end
+
+    test "allows default spec values" do
+      assert %Event{} = conform!(%Event{data: %{type: :foo}}, selection(schema(%Event{})))
     end
 
     test "returns deeply nested errors" do
@@ -217,8 +231,19 @@ defmodule Norm.Core.SelectionTest do
 
   describe "inspect" do
     test "single selection" do
-      assert inspect(selection(user_schema())) == "#Norm.Selection<%{required: [:name, :email, :age], schema: #Norm.Schema<%{age: #Norm.Spec<is_integer() and &(&1 > 0)>, email: #Norm.Spec<is_binary() and &(&1 =~ ~r\"@\")>, name: #Norm.Spec<is_binary()>}>}>"
-      assert inspect(selection(user_schema(), [:name])) == "#Norm.Selection<%{required: [:name], schema: #Norm.Schema<%{age: #Norm.Spec<is_integer() and &(&1 > 0)>, email: #Norm.Spec<is_binary() and &(&1 =~ ~r\"@\")>, name: #Norm.Spec<is_binary()>}>}>"
+      # The regex inspection changed in elixir 1.10. So for now we're going to support
+      # both versions in the test. We can remove this once elixir 1.12 is out.
+      if version().minor >= 10 do
+        assert inspect(selection(user_schema())) == "#Norm.Selection<%{required: [:name, :email, :age], schema: #Norm.Schema<%{age: #Norm.Spec<is_integer() and &(&1 > 0)>, email: #Norm.Spec<is_binary() and &(&1 =~ ~r/@/)>, name: #Norm.Spec<is_binary()>}>}>"
+        assert inspect(selection(user_schema(), [:name])) == "#Norm.Selection<%{required: [:name], schema: #Norm.Schema<%{age: #Norm.Spec<is_integer() and &(&1 > 0)>, email: #Norm.Spec<is_binary() and &(&1 =~ ~r/@/)>, name: #Norm.Spec<is_binary()>}>}>"
+      else
+        assert inspect(selection(user_schema())) == "#Norm.Selection<%{required: [:name, :email, :age], schema: #Norm.Schema<%{age: #Norm.Spec<is_integer() and &(&1 > 0)>, email: #Norm.Spec<is_binary() and &(&1 =~ ~r\"@\")>, name: #Norm.Spec<is_binary()>}>}>"
+        assert inspect(selection(user_schema(), [:name])) == "#Norm.Selection<%{required: [:name], schema: #Norm.Schema<%{age: #Norm.Spec<is_integer() and &(&1 > 0)>, email: #Norm.Spec<is_binary() and &(&1 =~ ~r\"@\")>, name: #Norm.Spec<is_binary()>}>}>"
+      end
     end
+  end
+
+  defp version do
+    Version.parse!(System.version())
   end
 end

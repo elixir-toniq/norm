@@ -68,6 +68,20 @@ defmodule Norm.Core.Spec do
     end
   end
 
+  # Guard-safe functions in the Integer module.
+  def build({{:., _, [{_, _, [:Integer]}, guard_name]}, _, _} = quoted)
+    when guard_name in [:is_even, :is_odd] do
+    predicate = Macro.to_string(quoted)
+
+    quote do
+      run = fn input ->
+        input |> unquote(quoted)
+      end
+
+      %Spec{predicate: unquote(predicate), f: run, generator: unquote(guard_name)}
+    end
+  end
+
   # Remote call
   def build({{:., _, _}, _, _} = quoted) do
     predicate = Macro.to_string(quoted)
@@ -105,6 +119,11 @@ defmodule Norm.Core.Spec do
           :is_float     -> StreamData.float()
           :is_integer   -> StreamData.integer()
           :is_list      -> StreamData.list_of(StreamData.term())
+          :is_tuple     -> StreamData.list_of(StreamData.term()) |> StreamData.map(&List.to_tuple/1)
+          :is_nil       -> StreamData.constant(nil)
+          :is_number    -> StreamData.one_of([StreamData.integer(), StreamData.float()])
+          :is_even      -> StreamData.integer() |> StreamData.map(&(&1 * 2))
+          :is_odd      -> StreamData.integer() |> StreamData.map(&(&1 * 2 + 1))
           _             -> nil
         end
       end

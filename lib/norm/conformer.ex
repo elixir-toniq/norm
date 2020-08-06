@@ -47,7 +47,8 @@ defmodule Norm.Conformer do
   defp format_val({:index, i}), do: "[#{i}]"
   defp format_val(t) when is_tuple(t), do: "#{inspect(t)}"
   defp format_val(l) when is_list(l), do: "#{inspect(l)}"
-  defp format_val(msg), do: "#{msg}"
+
+  defp format_val(msg), do: inspect(msg)
 
   defprotocol Conformable do
     @moduledoc false

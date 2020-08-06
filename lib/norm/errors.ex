@@ -56,7 +56,9 @@ defmodule Norm.SpecError do
   end
   defp format(atom, _) when is_atom(atom), do: ":#{atom}"
   defp format(str, _) when is_binary(str), do: ~s|"#{str}"|
-  defp format(%Spec{predicate: pred}, _), do: "spec(#{pred})"
+  defp format(%Spec{}=s, _), do: inspect(s)
+  defp format(%Spec.And{}=s, _), do: inspect(s)
+  defp format(%Spec.Or{}=s, _), do: inspect(s)
   defp format(%Schema{specs: specs}, i) do
     f = fn {key, spec_or_schema}, i ->
       format(key, i) <> " => " <> format(spec_or_schema, i + 1)
@@ -98,6 +100,9 @@ defmodule Norm.SpecError do
     else
       "one_of([])"
     end
+  end
+  defp format(val, _i) do
+    inspect(val)
   end
 
   defp pad(str, 0), do: str
