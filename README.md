@@ -35,7 +35,7 @@ user_schema
 => [
   %{user: %{age: 0, name: ""}},
   %{user: %{age: 2, name: "x"}},
-  %{user: %{age: -2, name: ""}}
+  %{user: %{age: 1, name: ""}}
 ]
 ```
 
