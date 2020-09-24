@@ -16,6 +16,7 @@ defmodule Norm do
     Schema,
     Selection,
     Spec,
+    Delegate
   }
 
   @doc false
@@ -148,6 +149,10 @@ defmodule Norm do
   """
   defmacro spec(predicate) do
     Spec.build(predicate)
+  end
+
+  def delegate(predicate) do
+    Delegate.build(predicate)
   end
 
   @doc ~S"""
