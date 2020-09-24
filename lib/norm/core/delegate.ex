@@ -1,4 +1,6 @@
 defmodule Norm.Core.Delegate do
+  @moduledoc false
+
   defstruct [:fun]
 
   def build(fun) when is_function(fun, 0) do

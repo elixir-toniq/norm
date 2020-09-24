@@ -1,29 +1,34 @@
 defmodule Norm.Core.DelegateTest do
   use Norm.Case, async: true
 
-  defmodule Foo do
+  defmodule TreeTest do
     def spec() do
-      schema(%{"level" => spec(is_integer()), "foo" => delegate(&Foo.spec/0)})
+      schema(%{
+        "value" => spec(is_integer()),
+        "left" => delegate(&TreeTest.spec/0),
+        "right" => delegate(&TreeTest.spec/0)
+      })
     end
   end
 
   describe "delegate/1" do
     test "can write recursive specs with 'delegate'" do
-      assert {:ok, _} = conform(%{}, Foo.spec())
-      assert {:ok, _} = conform(%{"level" => 3}, Foo.spec())
-
-      assert {:ok, _} = conform(%{"level" => 3, "foo" => %{"level" => 4}}, Foo.spec())
+      assert {:ok, _} = conform(%{}, TreeTest.spec())
 
       assert {:ok, _} =
                conform(
-                 %{"level" => 3, "foo" => %{"level" => 4, "foo" => %{"level" => 5}}},
-                 Foo.spec()
+                 %{"value" => 4, "left" => %{"value" => 2}, "right" => %{"value" => 12}},
+                 TreeTest.spec()
                )
 
-      assert {:error, [%{path: ["foo", "foo", "level"], spec: "is_integer()"}]} =
+      assert {:error, [%{input: "12", path: ["left", "left", "value"], spec: "is_integer()"}]} =
                conform(
-                 %{"level" => 3, "foo" => %{"level" => 4, "foo" => %{"level" => "5"}}},
-                 Foo.spec()
+                 %{
+                   "value" => 4,
+                   "left" => %{"value" => 2, "left" => %{"value" => "12"}},
+                   "right" => %{"value" => 12}
+                 },
+                 TreeTest.spec()
                )
     end
   end
