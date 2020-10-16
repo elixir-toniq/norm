@@ -51,6 +51,7 @@ jobs:
           otp-version: 23.1.1
           elixir-version: 1.11.0
 
-      - run: mix deps.get
-      - run: MIX_ENV=test mix compile
-      - run: mix test
+      - run: mix deps.get --only test
+      - run: mix test --color 2>/tmp/tests.stderr
+      - name: Make sure tests do not have warnings
+        run: "! grep -v 'warning: ' /tmp/tests.stderr"
