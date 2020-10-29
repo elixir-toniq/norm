@@ -263,7 +263,7 @@ defmodule NormTest do
       assert {:error, _errors} = conform([{:foo, :bar} | list], spec)
 
       assert list == conform!(list, coll_of(opts, [min_count: 2, distinct: true]))
-      assert {:error, errors} = conform([], coll_of(opts, [min_count: 2, distinct: true]))
+      assert {:error, _errors} = conform([], coll_of(opts, [min_count: 2, distinct: true]))
     end
 
     property "can be generated" do
