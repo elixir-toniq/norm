@@ -2,7 +2,7 @@ defmodule Norm.Core.DelegateTest do
   use Norm.Case, async: true
 
   defmodule TreeTest do
-    def spec() do
+    def spec do
       schema(%{
         "value" => spec(is_integer()),
         "left" => delegate(&TreeTest.spec/0),

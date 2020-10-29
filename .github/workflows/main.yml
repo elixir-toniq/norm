@@ -18,7 +18,7 @@ jobs:
       - run: mix deps.get
       - run: mix format --check-formatted
       - run: mix compile --warnings-as-errors
-      - run: mix credo
+      - run: mix credo --all --strict
 
   test:
     name: Test
@@ -53,7 +53,8 @@ jobs:
           elixir-version: ${{matrix.elixir}}
 
       - run: mix deps.get --only test
-      - run: mix test --color 2>/tmp/tests.stderr
+      - name: Run mix test
+        run: mix test --color 2>/tmp/tests.stderr
       - name: Make sure tests do not have warnings
         run: "! grep -v 'warning: ' /tmp/tests.stderr"
         if: matrix.warnings_as_errors

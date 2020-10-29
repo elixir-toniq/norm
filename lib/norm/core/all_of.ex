@@ -25,4 +25,3 @@ defmodule Norm.Core.AllOf do
     end
   end
 end
-
