@@ -16,6 +16,7 @@ defmodule Norm do
     Schema,
     Selection,
     Spec,
+    Delegate
   }
 
   @doc false
@@ -145,6 +146,20 @@ defmodule Norm do
   """
   defmacro spec(predicate) do
     Spec.build(predicate)
+  end
+
+  @doc ~S"""
+  Allows encapsulation of a spec in another function. This enables late-binding of
+  specs which enables definition of recursive specs.
+
+  ## Examples:
+      iex> conform!(%{"value" => 1, "left" => %{"value" => 2, "right" => %{"value" => 4}}}, Norm.Core.DelegateTest.TreeTest.spec())
+      %{"value" => 1, "left" => %{"value" => 2, "right" => %{"value" => 4}}}
+      iex> conform(%{"value" => 1, "left" => %{"value" => 2, "right" => %{"value" => 4, "right" => %{"value" => "12"}}}}, Norm.Core.DelegateTest.TreeTest.spec())
+      {:error, [%{input: "12", path: ["left", "right", "right", "value"], spec: "is_integer()"}]}
+  """
+  def delegate(predicate) do
+    Delegate.build(predicate)
   end
 
   @doc ~S"""

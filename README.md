@@ -27,7 +27,7 @@ user_schema = schema(%{
 input = %{user: %{name: "chris", age: 30, email: "c@keathley.io"}}
 
 conform!(input, user_schema)
-=> %{user: %{name: "chris", age: 30}}
+=> %{user: %{name: "chris", age: 30, email: "c@keathley.io"}}
 
 user_schema
 |> gen()
@@ -35,7 +35,7 @@ user_schema
 => [
   %{user: %{age: 0, name: ""}},
   %{user: %{age: 2, name: "x"}},
-  %{user: %{age: -2, name: ""}}
+  %{user: %{age: 1, name: ""}}
 ]
 ```
 
