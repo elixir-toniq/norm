@@ -94,7 +94,7 @@ defmodule Norm.ContractTest do
     defmodule Reflection do
       use Norm
 
-      def int(), do: spec(is_integer())
+      def int, do: spec(is_integer())
 
       @contract foo(a :: int(), int()) :: int()
       def foo(a, b), do: a + b

@@ -4,33 +4,57 @@ on: [push, pull_request]
 
 jobs:
   credo:
-    name: Credo
+    name: Static analysis
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
 
       - name: Install OTP and Elixir
         uses: actions/setup-elixir@v1
         with:
-          otp-version: 22.1
-          elixir-version: 1.9.4
+          otp-version: 23.1.1
+          elixir-version: 1.11.x
 
       - run: mix deps.get
-      - run: mix compile
-      - run: mix credo
+      - run: mix format --check-formatted
+      - run: mix compile --warnings-as-errors
+      - run: mix credo --all --strict
 
   test:
     name: Test
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - elixir: 1.7.x
+            otp: 19.3.6.13
+          - elixir: 1.8.x
+            otp: 20.3.8.26
+          - elixir: 1.9.x
+            otp: 20.3.8.26
+          - elixir: 1.10.x
+            otp: 21.3.8.18
+          - elixir: 1.11.x
+            otp: 21.3.8.18
+          - elixir: 1.11.x
+            otp: 23.1.1
+            warnings_as_errors: true
+    env:
+      MIX_ENV: test
+
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
 
       - name: Install OTP and Elixir
         uses: actions/setup-elixir@v1
         with:
-          otp-version: 22.1
-          elixir-version: 1.9.4
+          otp-version: ${{matrix.otp}}
+          elixir-version: ${{matrix.elixir}}
 
-      - run: mix deps.get
-      - run: MIX_ENV=test mix compile
-      - run: mix test
+      - run: mix deps.get --only test
+      - name: Run mix test
+        run: mix test --color 2>/tmp/tests.stderr
+      - name: Make sure tests do not have warnings
+        run: "! grep -v 'warning: ' /tmp/tests.stderr"
+        if: matrix.warnings_as_errors
