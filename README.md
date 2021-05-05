@@ -398,7 +398,7 @@ with other StreamData functions:
 
 ```elixir
 age = spec(is_integer() and &(&1 >= 0))
-StreamData.frequencies([
+StreamData.frequency([
   {3, gen(age)},
   {1, StreamData.binary()},
 ])
