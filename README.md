@@ -452,7 +452,7 @@ as a dependency.
 def deps do
   [
     {:stream_data, "~> 0.4"},
-    {:norm, "~> 0.12"}
+    {:norm, "~> 0.13"}
   ]
 end
 ```

@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.13.0 (June, 25, 2021)
+
+* Bug fix for selections
+* Added delegate for recursive schemas
+
 ## 0.12.0 (May 12, 2020)
 
 * Added reflection and other improvements to contracts - Wojtek Mach
