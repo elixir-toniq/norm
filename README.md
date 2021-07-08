@@ -10,33 +10,28 @@ validations.
 ```elixir
 import Norm
 
-conform!(123, spec(is_integer() and &(&1 > 0)))
-=> 123
+iex> conform!(123, spec(is_integer() and &(&1 > 0)))
+123
 
-conform!(-50, spec(is_integer() and &(&1 > 0)))
-** (Norm.MismatchError) val: -50 fails: &(&1 > 0)
-    (norm) lib/norm.ex:44: Norm.conform!/2
+iex> conform!(-50, spec(is_integer() and &(&1 > 0)))
+** (Norm.MismatchError) Could not conform input:
+val: -50 fails: &(&1 > 0)
 
-user_schema = schema(%{
-  user: schema(%{
-    name: spec(is_binary()),
-    age: spec(is_integer() and &(&1 > 0))
-  })
-})
-
-input = %{user: %{name: "chris", age: 30, email: "c@keathley.io"}}
-
-conform!(input, user_schema)
-=> %{user: %{name: "chris", age: 30, email: "c@keathley.io"}}
-
-user_schema
-|> gen()
-|> Enum.take(3)
-=> [
-  %{user: %{age: 0, name: ""}},
-  %{user: %{age: 2, name: "x"}},
-  %{user: %{age: 1, name: ""}}
-]
+iex> user_schema = schema(%{
+...>   user: schema(%{
+...>     name: spec(is_binary()),
+...>     age: spec(is_integer() and &(&1 > 0))
+...>   })
+...> })
+iex> input = %{user: %{name: "chris", age: 30, email: "c@keathley.io"}}
+iex> conform!(input, user_schema)
+%{user: %{name: "chris", age: 30, email: "c@keathley.io"}}
+iex> generated_users =
+...>   user_schema
+...>   |> gen()
+...>   |> Enum.take(3)
+iex> for g <- generated_users, do: g.user.age > 0 && is_binary(g.user.name)
+[true, true, true]
 ```
 
 Norm can also be used to specify contracts for function definitions:
@@ -83,12 +78,14 @@ The data is always passed as the first argument to your predicate so you
 can use predicates with multiple values like so:
 
 ```elixir
-def greater?(x, y), do: x > y
-conform!(10, spec(greater?(5)))
-=> 10
-conform!(3, spec(greater?(5)))
-** (Norm.MismatchError) val: 3 fails: greater?(5)
-    (norm) lib/norm.ex:44: Norm.conform!/2
+iex> defmodule Predicate do
+...>   def greater?(x, y), do: x > y
+...> end
+iex> conform!(10, spec(Predicate.greater?(5)))
+10
+iex> conform!(3, spec(Predicate.greater?(5)))
+** (Norm.MismatchError) Could not conform input:
+val: 3 fails: Predicate.greater?(5)
 ```
 
 ### Tuples and atoms
@@ -96,34 +93,41 @@ conform!(3, spec(greater?(5)))
 Atoms and tuples can be matched without needing to wrap them in a function.
 
 ```elixir
-:atom = conform!(:atom, :atom)
-
-{1, "hello"} = conform!({1, "hello"}, {spec(is_integer()), spec(is_binary())})
-
-conform!({1, 2}, {:one, :two})
-** (Norm.MismatchError) val: 1 in: 0 fails: is not an atom.
+iex> :atom = conform!(:atom, :atom)
+:atom
+iex> {1, "hello"} = conform!({1, "hello"}, {spec(is_integer()), spec(is_binary())})
+{1, "hello"}
+iex> conform!({1, 2}, {:one, :two})
+** (Norm.MismatchError) Could not conform input:
+val: 1 in: 0 fails: is not an atom.
 val: 2 in: 1 fails: is not an atom.
 ```
 
 Because Norm supports matching on bare tuples we can easily validate functions
-that return `{:ok, term()}` and `{:error, term()}` tuples.
+that return `{:ok, term()}` and `{:error, term()}` tuples. These specifications can be combined with `one_of/1` to create union types.
 
 ```elixir
-# if User.get_name/1 succeeds it returns {:ok, binary()}
-result = User.get_name(123)
-{:ok, name} = conform!(result, {:ok, spec(is_binary())})
-```
-
-These specifications can be combined with `one_of/1` to create union types.
-
-```elixir
-result_spec = one_of([
-  {:ok, spec(is_binary())},
-  {:error, spec(fn _ -> true end)},
-])
-
-{:ok, "alice"} = conform!(User.get_name(123), result_spec)
-{:error, "user does not exist"} = conform!(User.get_name(-42), result_spec)
+iex> defmodule User do
+...>   defstruct [:name, :age]
+...>
+...>   def get_name(id) do
+...>     case id do
+...>       1 -> {:ok, "Chris"}
+...>       2 -> {:ok, "Alice"}
+...>       _ -> {:error, "user does not exist"}
+...>     end
+...>   end
+...> end
+iex> result_spec = one_of([
+...>   {:ok, spec(is_binary())},
+...>   {:error, spec(fn _ -> true end)},
+...> ])
+iex> {:ok, _name} = conform!(User.get_name(1), result_spec)
+{:ok, "Chris"}
+iex> {:ok, "Alice"} = conform!(User.get_name(2), result_spec)
+{:ok, "Alice"}
+iex> {:error, _error} = conform!(User.get_name(-42), result_spec)
+{:error, "user does not exist"}
 ```
 
 ### Collections
@@ -131,7 +135,8 @@ result_spec = one_of([
 Norm can define collections of values using `coll_of`.
 
 ```elixir
-[1, 2, 3] = conform!([1,2,3], coll_of(spec(is_integer)))
+iex> conform!([1,2,3], coll_of(spec(is_integer)))
+[1, 2, 3]
 ```
 
 Collections can take a number of options:
@@ -143,8 +148,8 @@ Collections can take a number of options:
 * `:into` - The output collection the input will be conformed into. If not specified then the input type will be used.
 
 ```elixir
-conform!([:a, :b, :c], coll_of(spec(is_atom), into: MapSet.new()))
-# => #MapSet<[:a, :b, :c]>
+iex> conform!([:a, :b, :c], coll_of(spec(is_atom), into: MapSet.new()))
+#MapSet<[:a, :b, :c]>
 ```
 
 ### Schemas
@@ -152,19 +157,17 @@ conform!([:a, :b, :c], coll_of(spec(is_atom), into: MapSet.new()))
 Norm provides a `schema/1` function for specifying maps and structs:
 
 ```elixir
-user_schema = schema(%{
-  user: schema(%{
-    name: spec(is_binary()),
-    age: spec(is_integer()),
-  })
-})
-
-conform!(%{user: %{name: "chris", age: 31}}, user_schema)
-=> %{user: %{name: "chris", age: 31}}
-
-conform!(%{user: %{name: "chris", age: -31}}, user_schema)
-** (Norm.MismatchError) in: :user/:age val: -31 fails: &(&1 > 0)
-    (norm) lib/norm.ex:44: Norm.conform!/2
+iex> user_schema = schema(%{
+...>   user: schema(%{
+...>     name: spec(is_binary()),
+...>     age: spec(is_integer() and & &1 > 0),
+...>   })
+...> })
+iex> conform!(%{user: %{name: "chris", age: 31}}, user_schema)
+%{user: %{name: "chris", age: 31}}
+iex> conform!(%{user: %{name: "chris", age: -31}}, user_schema)
+** (Norm.MismatchError) Could not conform input:
+val: -31 in: :user/:age fails: &(&1 > 0)
 ```
 
 Schema's are designed to allow systems to grow over time. They provide this
@@ -173,17 +176,16 @@ are passed through when conforming the input. The second is that all keys in a
 schema are optional. This means that all of these are valid:
 
 ```elixir
-user_schema = schema(%{
-  name: spec(is_binary()),
-  age: spec(is_integer()),
-})
-
-conform!(%{}, user_schema)
-=> %{}
-conform!(%{age: 31}, user_schema)
-=> %{age: 31}
-conform!(%{foo: :foo, bar: :bar}, user_schema)
-=> %{foo: :foo, bar: :bar}
+iex> user_schema = schema(%{
+...>   name: spec(is_binary()),
+...>   age: spec(is_integer()),
+...> })
+iex> conform!(%{}, user_schema)
+%{}
+iex> conform!(%{age: 31}, user_schema)
+%{age: 31}
+iex> conform!(%{foo: :foo, bar: :bar}, user_schema)
+%{foo: :foo, bar: :bar}
 ```
 
 If you're used to more restrictive systems for managing data these might seem
@@ -214,12 +216,11 @@ specced keys will be conformed. The remaining keys will be checked for
 presence.
 
 ```elixir
-defmodule User do
+defmodule Norm.User do
   defstruct [:name, :age]
 end
-
-conform!(%User{name: "chris"}, schema(%User{}))
-=> %User{name: "chris", age: nil}
+iex> user_schema = schema(%Norm.User{})
+iex> conform!(%Norm.User{name: "chris"}, user_schema)
 ```
 
 #### Key semantics
@@ -240,36 +241,32 @@ Selections takes a schema and a list of keys - or keys to lists of keys - that
 must be present in the schema.
 
 ```elixir
-user_schema = schema(%{
-  user: schema(%{
-    name: spec(is_binary()),
-    age: spec(is_integer()),
-  })
-})
-just_age = selection(user_schema, [user: [:age]])
-
-conform!(%{user: %{name: "chris", age: 31}}, just_age)
-=> %{user: %{age: 31, name: "chris"}}
-
-conform!(%{user: %{name: "chris"}}, just_age)
+iex> user_schema = schema(%{
+...>   user: schema(%{
+...>     name: spec(is_binary()),
+...>     age: spec(is_integer()),
+...>   })
+...> })
+iex> just_age = selection(user_schema, [user: [:age]])
+iex> conform!(%{user: %{name: "chris", age: 31}}, just_age)
+%{user: %{age: 31, name: "chris"}}
+iex> conform!(%{user: %{name: "chris"}}, just_age)
 ** (Norm.MismatchError) Could not conform input:
 val: %{name: "chris"} in: :user/:age fails: :required
-    (norm) lib/norm.ex:387: Norm.conform!/2
 ```
 
 If you need to mark all fields in a schema as required you can elide the list
 of keys like so:
 
 ```elixir
-user_schema = schema(%{
-  user: schema(%{
-    name: spec(is_binary()),
-    age: spec(is_integer()),
-  })
-})
-
-# Require all fields recursively
-conform!(%{user: %{name: "chris", age: 31}}, selection(user_schema))
+iex> user_schema = schema(%{
+...>   user: schema(%{
+...>     name: spec(is_binary()),
+...>     age: spec(is_integer()),
+...>   })
+...> })
+iex> conform!(%{user: %{name: "chris", age: 31}}, selection(user_schema))
+%{user: %{name: "chris", age: 31}}
 ```
 
 Selections are an important tool because they give control over optionality
@@ -283,20 +280,17 @@ function. This is useful when you need to support multiple schema's or
 multiple alternative specs.
 
 ```elixir
-create_event = schema(%{type: spec(&(&1 == :create))})
-update_event = schema(%{type: spec(&(&1 == :update))})
-event = alt(create: create_event, update: update_event)
-
-conform!(%{type: :create}, event)
-=> {:create, %{type: :create}}
-
-conform!(%{type: :update}, event)
-=> {:update, %{type: :update}}
-
-conform!(%{type: :delete}, event)
-** (Norm.MismatchError)
-  in: :create/:type val: :delete fails: &(&1 == :create)
-  in: :update/:type val: :delete fails: &(&1 == :update)
+iex> create_event = schema(%{type: spec(&(&1 == :create))})
+iex> update_event = schema(%{type: spec(&(&1 == :update))})
+iex> event = alt(create: create_event, update: update_event)
+iex> conform!(%{type: :create}, event)
+{:create, %{type: :create}}
+iex> conform!(%{type: :update}, event)
+{:update, %{type: :update}}
+iex> conform!(%{type: :delete}, event)
+** (Norm.MismatchError) Could not conform input:
+val: :delete in: :create/:type fails: &(&1 == :create)
+val: :delete in: :update/:type fails: &(&1 == :update)
 ```
 
 ## Generators
@@ -307,23 +301,16 @@ examples can then be used for property based testing, local development,
 seeding databases, or any other use case.
 
 ```elixir
-user_schema = schema(%{
-  user: schema(%{
-    name: spec(is_binary()),
-    age: spec(is_integer() and &(&1 > 0))
-  })
-})
-conform!(%{user: %{name: "chris", age: 30}}, user_schema)
-=> %{user: %{name: "chris", age: 30}}
-
-user_schema
-|> gen()
-|> Enum.take(3)
-=> [
-  %{user: %{age: 0, name: ""}},
-  %{user: %{age: 2, name: "x"}},
-  %{user: %{age: -2, name: ""}}
-]
+iex> user_schema = schema(%{
+...>   name: spec(is_binary()),
+...>   age: spec(is_integer() and &(&1 > 0))
+...> })
+iex> generated =
+...>   user_schema
+...>   |> gen()
+...>   |> Enum.take(3)
+iex> for user <- generated, do: user.age > 0 && is_binary(user.name)
+[true, true, true]
 ```
 
 Under the hood Norm uses StreamData for its data generation. This means
