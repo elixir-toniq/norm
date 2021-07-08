@@ -175,7 +175,8 @@ defmodule Norm.Core.SchemaTest do
 
     test "allows defaults" do
       spec = schema(%Movie{})
-      assert movie = conform(%Movie{}, spec)
+      assert movie = conform!(%Movie{}, spec)
+      assert match?(%Movie{}, movie)
     end
 
     property "can generate proper structs" do
