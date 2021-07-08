@@ -264,6 +264,7 @@ defmodule NormTest do
 
       assert list == conform!(list, coll_of(opts, [min_count: 2, distinct: true]))
       assert {:error, errors} = conform([], coll_of(opts, [min_count: 2, distinct: true]))
+      assert get_in(errors, [Access.at(0), :spec]) == "min_count: 2"
     end
 
     property "can be generated" do
