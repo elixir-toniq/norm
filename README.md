@@ -55,7 +55,7 @@ end
 
 Norm validates data by "conforming" the value to a specification. If the
 values don't conform then a list of errors is returned. There are
-2 functions provided for this `conform/2` and `conform!/2`. If you need to
+2 functions provided for this: `conform/2` and `conform!/2`. If you need to
 return a list of well defined errors then you should use `conform/2`.
 Otherwise `conform!/2` is generally more useful. The input data is
 always passed as the 1st argument to `conform` so that calls to conform
@@ -141,11 +141,11 @@ iex> conform!([1,2,3], coll_of(spec(is_integer)))
 
 Collections can take a number of options:
 
-* `:kind` - predicate function the kind of collection being conformed
+* `:kind` - predicate function, the kind of collection being conformed
 * `:distinct` - boolean value for specifying if the collection should have distinct elements
-* `:min_count` - Minimum element count
-* `:max_count` - Maximum element count
-* `:into` - The output collection the input will be conformed into. If not specified then the input type will be used.
+* `:min_count` - minimum element count
+* `:max_count` - maximum element count
+* `:into` - the output collection the input will be conformed into; if not specified then the input type will be used.
 
 ```elixir
 iex> conform!([:a, :b, :c], coll_of(spec(is_atom), into: MapSet.new()))
@@ -170,7 +170,7 @@ iex> conform!(%{user: %{name: "chris", age: -31}}, user_schema)
 val: -31 in: :user/:age fails: &(&1 > 0)
 ```
 
-Schema's are designed to allow systems to grow over time. They provide this
+Schemas are designed to allow systems to grow over time. They provide this
 functionality in two ways. The first is that any unspecified fields in the input
 are passed through when conforming the input. The second is that all keys in a
 schema are optional. This means that all of these are valid:
@@ -206,9 +206,9 @@ defmodule User do
 end
 ```
 
-This will ensure that the input is a `User` struct with the key that match
-the given specification. Its convention to provide a `s()` function in the
-module that defines the struct so that schema's can be shared throughout
+This will ensure that the input is a `User` struct with keys that match
+the given specification. It's convention to provide a `s()` function in the
+module that defines the struct so that schemas can be shared throughout
 your system.
 
 You don't need to provide specs for all the keys in your struct. Only the
@@ -271,12 +271,12 @@ iex> conform!(%{user: %{name: "chris", age: 31}}, selection(user_schema))
 
 Selections are an important tool because they give control over optionality
 back to the call site. This allows callers to determine what they actually need
-and makes schema's much more reusable.
+and makes schemas much more reusable.
 
 ### Patterns
 
 Norm provides a way to specify alternative specs using the `alt/1`
-function. This is useful when you need to support multiple schema's or
+function. This is useful when you need to support multiple schemas or
 multiple alternative specs.
 
 ```elixir
@@ -296,7 +296,7 @@ val: :delete in: :update/:type fails: &(&1 == :update)
 ## Generators
 
 Along with validating that data conforms to a given specification, Norm
-can also use specificiations to generate examples of good data. These
+can also use specifications to generate examples of good data. These
 examples can then be used for property based testing, local development,
 seeding databases, or any other use case.
 
@@ -355,14 +355,14 @@ Enum.take(gen(spec(is_integer() and fn x -> rem(x, 2) == 0 end)), 5)
 [0, -2, 2, 0, 4]
 ```
 
-But its also possible to create filters that are too specific such as
+But it's also possible to create filters that are too specific such as
 this:
 
 ```elixir
 gen(spec(is_binary() and &(&1 =~ ~r/foobarbaz/)))
 ```
 
-Norm can determine the generators to use however its incredibly unlikely
+Norm can determine the generators to use however it's incredibly unlikely
 that Norm will be able to generate data that matches the filter. After 25
 consecutive unseccessful attempts to generate a good value Norm (StreamData
 under the hood) will return an error. In these scenarios we can create
@@ -400,7 +400,7 @@ generation co-located with the specification of the data.
 ## Adding contracts to functions
 
 You can `conform` data wherever it makes sense to do so in your application.
-But one of the most common ways to use Norm is to validate a functions arguments
+But one of the most common ways to use Norm is to validate a function's arguments
 and return value. Because this is such a common pattern, Norm provides function
 annotations similar to `@spec`:
 
@@ -457,5 +457,5 @@ limited set of ideas that are coming soon.
 
 - [ ] More streamlined specification of keyword lists.
 - [ ] Support "sets" of literal values
-- [ ] specs for functions and anonymous functions
-- [ ] easier way to do dispatch based on schema keys
+- [ ] Specs for functions and anonymous functions
+- [ ] Easier way to do dispatch based on schema keys
