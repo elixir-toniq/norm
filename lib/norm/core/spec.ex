@@ -143,6 +143,11 @@ defmodule Norm.Core.Spec do
           raise ArgumentError, "Predicates must return a boolean value"
       end
     end
+
+    def valid?(%{f: _f, predicate: _pred} = spec, input, path) do
+      {status, _} = conform(spec, input, path)
+      status == :ok
+    end
   end
 
   @doc false

@@ -7,6 +7,10 @@ defmodule Norm.Conformer do
     Norm.Conformer.Conformable.conform(spec, input, [])
   end
 
+  def valid?(spec, input) do
+    Norm.Conformer.Conformable.valid?(spec, input, [])
+  end
+
   def group_results(results) do
     results
     |> Enum.reduce(%{ok: [], error: []}, fn {result, s}, acc ->
@@ -49,10 +53,12 @@ defmodule Norm.Conformer do
   defprotocol Conformable do
     @moduledoc false
     # Defines a conformable type. Must take the type, current path, and input and
-    # return an success tuple with the conformed data or a list of errors.
+    # return a success tuple with the conformed data or a list of errors.
 
     # @fallback_to_any true
     def conform(spec, path, input)
+
+    def valid?(spec, path, input)
   end
 end
 
@@ -71,11 +77,15 @@ defimpl Norm.Conformer.Conformable, for: Atom do
         {:error, [Conformer.error(path, input, "is not an atom.")]}
 
       atom != input ->
-        {:error, [Conformer.error(path, input, "== :#{atom}")]}
+        {:error, [Conformer.error(path, input, "== #{inspect(atom)}")]}
 
       true ->
         {:ok, atom}
     end
+  end
+
+  def valid?(atom, input, path) do
+    conform(atom, input, path) |> elem(0) == :ok
   end
 end
 
@@ -104,5 +114,9 @@ defimpl Norm.Conformer.Conformable, for: Tuple do
     else
       {:ok, List.to_tuple(results.ok)}
     end
+  end
+
+  def valid?(spec, input, path) do
+    conform(spec, input, path) |> elem(0) == :ok
   end
 end
