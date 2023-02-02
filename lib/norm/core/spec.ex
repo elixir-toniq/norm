@@ -9,7 +9,15 @@ defmodule Norm.Core.Spec do
     Or
   }
 
-  defstruct predicate: nil, generator: nil, f: nil
+  defstruct predicate: nil, generator: nil, f: nil, message: nil
+
+  def build(quoted, message) do
+    built_spec = build(quoted)
+
+    quote do
+      %Spec{unquote(built_spec) | message: unquote(message)}
+    end
+  end
 
   def build({:or, _, [left, right]}) do
     l = build(left)
@@ -131,6 +139,19 @@ defmodule Norm.Core.Spec do
   end
 
   defimpl Norm.Conformer.Conformable do
+    def conform(%{f: f, predicate: pred, message: msg}, input, path) do
+      case f.(input) do
+        true ->
+          {:ok, input}
+
+        false ->
+          {:error, [Norm.Conformer.error(path, input, pred, msg)]}
+
+        _ ->
+          raise ArgumentError, "Predicates must return a boolean value"
+      end
+    end
+
     def conform(%{f: f, predicate: pred}, input, path) do
       case f.(input) do
         true ->

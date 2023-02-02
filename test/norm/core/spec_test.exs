@@ -7,6 +7,40 @@ defmodule Norm.Core.SpecTest do
     def match?(x, given), do: x == given
   end
 
+  describe "WIP - spec/2" do
+    test "WIP - can include validation messages" do
+      is_binary_spec = spec(is_binary(), "is not binary")
+
+      {:error, [error]} = conform(1, is_binary_spec)
+
+      assert error.message == "is not binary"
+    end
+
+    test "WIP - can chain specs and their validation messages" do
+      # NOTE: This isn't really a concern of the Spec module but I want to keep things centralized for this POC
+      is_string_spec = [
+        spec(is_binary(), "is not binary"),
+        spec(&(String.length(&1) > 1), "must have more than 2 characters")
+      ]
+
+      {:error, [error]} = conform("", is_string_spec)
+
+      assert error.message == "must have more than 2 characters"
+    end
+
+    test "WIP - chained specs fail fast to not invoke following specs" do
+      # NOTE: This isn't really a concern of the Spec module but I want to keep things centralized for this POC
+      really_bad_spec = [
+        spec(&(&1 && false), "I didn't like that"),
+        spec(&(&1 && raise ""), "I really won't like this")
+      ]
+
+      {:error, [error]} = conform("", really_bad_spec)
+
+      assert error.message == "I didn't like that"
+    end
+  end
+
   describe "spec/1" do
     test "can compose specs with 'and'" do
       hex = spec(is_binary() and (&String.starts_with?(&1, "#")))
