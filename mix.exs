@@ -2,19 +2,20 @@ defmodule Norm.MixProject do
   use Mix.Project
 
   @version "0.13.0"
+  @source_url "https://github.com/elixir-toniq/norm"
 
-  def project do
+  def(project) do
     [
       app: :norm,
       version: @version,
-      elixir: "~> 1.7",
+      elixir: "~> 1.11",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       description: description(),
       package: package(),
       name: "Norm",
-      source_url: "https://github.com/keathley/norm",
+      source_url: @source_url,
       docs: docs()
     ]
   end
@@ -49,14 +50,14 @@ defmodule Norm.MixProject do
     [
       name: "norm",
       licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/keathley/norm"}
+      links: %{"GitHub" => @source_url}
     ]
   end
 
   def docs do
     [
       source_ref: "v#{@version}",
-      source_url: "https://github.com/keathley/norm",
+      source_url: @source_url,
       main: "Norm"
     ]
   end
