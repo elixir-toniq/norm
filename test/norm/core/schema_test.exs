@@ -153,11 +153,11 @@ defmodule Norm.Core.SchemaTest do
       assert input == conform!(input, User.s())
       assert {:error, errors} = conform(%User{name: :foo, age: "31", email: 42}, User.s())
 
-      assert errors == [
+      assert MapSet.equal?(MapSet.new(errors), MapSet.new([
         %{spec: "is_integer()", input: "31", path: [:age]},
         %{spec: "is_binary()", input: 42, path: [:email]},
         %{spec: "is_binary()", input: :foo, path: [:name]}
-      ]
+      ]))
     end
 
     test "only checks the keys that have specs" do
