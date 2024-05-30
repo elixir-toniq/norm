@@ -39,7 +39,10 @@ defmodule Norm.ContractTest do
   end
 
   test "bad contract" do
-    assert_raise ArgumentError, ~r/got: `@contract\(foo\(n\)\)`/, fn ->
+    expected = if version().minor >= 13,
+      do: ~r/got: `@contract foo\(n\)`/, else: ~r/got: `@contract\(foo\(n\)\)`/
+
+    assert_raise ArgumentError, expected, fn ->
       defmodule BadContract do
         use Norm
 
@@ -105,4 +108,6 @@ defmodule Norm.ContractTest do
     assert inspect(contract) ==
              "%Norm.Contract{args: [a: #Norm.Spec<is_integer()>, arg2: #Norm.Spec<is_integer()>], result: #Norm.Spec<is_integer()>}"
   end
+
+  defp version, do: Version.parse!(System.version())
 end
