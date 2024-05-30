@@ -4,7 +4,7 @@ defmodule Norm.MixProject do
   @version "0.13.0"
   @source_url "https://github.com/elixir-toniq/norm"
 
-  def(project) do
+  def project do
     [
       app: :norm,
       version: @version,
