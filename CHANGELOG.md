@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.13.1 (January, 10, 2025)
+
+- relax StreamData version constraint #149
+
 ## 0.13.0 (June, 25, 2021)
 
 * Bug fix for selections
