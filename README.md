@@ -424,7 +424,7 @@ If the arguments for `rgb_to_hex` don't conform to the specification or if
 `rgb_to_hex` does not return a value that conforms to `hex` then an error will
 be raised.
 
-Note `@contract` must be placed _before_ `@doc` as above for `ExDoc` and
+Note `@contract` must be placed _before_ `@doc` as above for ExDoc and
 `ExUnit.DocTest` to continue working as intended.
 
 <!-- MDOC !-->
