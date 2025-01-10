@@ -2,10 +2,7 @@ defmodule Norm.MismatchError do
   defexception [:message]
 
   def exception(errors) do
-    msg =
-      errors
-      |> Enum.map(&Norm.Conformer.error_to_msg/1)
-      |> Enum.join("\n")
+    msg = Enum.map_join(errors, "\n", &Norm.Conformer.error_to_msg/1)
 
     %__MODULE__{message: "Could not conform input:\n" <> msg}
   end
@@ -67,8 +64,7 @@ defmodule Norm.SpecError do
     specs =
       specs
       |> Enum.map(& f.(&1, i))
-      |> Enum.map(&pad(&1, (i + 1) * 2))
-      |> Enum.join("\n")
+      |> Enum.map_join("\n", &pad(&1, (i + 1) * 2))
 
     "%{\n" <> specs <> "\n" <> pad("}", i * 2)
   end
@@ -79,8 +75,7 @@ defmodule Norm.SpecError do
     formatted =
       specs
       |> Enum.map(&format(&1, i))
-      |> Enum.map(&pad(&1, (i + 1) * 2))
-      |> Enum.join("\n")
+      |> Enum.map_join("\n", &pad(&1, (i + 1) * 2))
 
     if length(specs) > 0 do
       "alt([\n#{formatted}\n" <> pad("])", i * 2)
@@ -92,8 +87,7 @@ defmodule Norm.SpecError do
     formatted =
       specs
       |> Enum.map(&format(&1, i))
-      |> Enum.map(&pad(&1, (i + 1) * 2))
-      |> Enum.join("\n")
+      |> Enum.map_join("\n", &pad(&1, (i + 1) * 2))
 
     if length(specs) > 0 do
       "one_of([\n#{formatted}\n" <> pad("])", i * 2)

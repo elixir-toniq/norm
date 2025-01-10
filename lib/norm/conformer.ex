@@ -30,9 +30,7 @@ defmodule Norm.Conformer do
   end
 
   defp build_path(keys) do
-    keys
-    |> Enum.map(&format_val/1)
-    |> Enum.join("/")
+    Enum.map_join(keys, "/", &format_val/1)
   end
 
   defp format_val(nil), do: "nil"
