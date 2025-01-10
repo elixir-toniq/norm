@@ -15,7 +15,9 @@ defmodule Norm.Core.SpecTest do
       assert {:error, errors} = conform(nil, hex)
       assert errors == [%{spec: "is_binary()", input: nil, path: []}]
       assert {:error, errors} = conform("bad", hex)
-      assert errors == [%{spec: "&(String.starts_with?(&1, \"#\"))", input: "bad", path: []}]
+
+      spec = if version().minor >= 13, do: "&String.starts_with?(&1, \"#\")", else: "&(String.starts_with?(&1, \"#\"))"
+      assert errors == [%{spec: spec, input: "bad", path: []}]
     end
 
     test "'and' and 'or' can be chained" do
@@ -144,4 +146,6 @@ defmodule Norm.Core.SpecTest do
                "#Norm.Spec<is_integer() or is_float()>"
     end
   end
+
+  defp version, do: Version.parse!(System.version())
 end

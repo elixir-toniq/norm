@@ -49,7 +49,7 @@ defmodule Norm.Core.Selection do
   defp validate_selectors!([]), do: true
   defp validate_selectors!([{_key, inner} | rest]), do: validate_selectors!(inner) and validate_selectors!(rest)
   defp validate_selectors!([_key | rest]), do: validate_selectors!(rest)
-  defp validate_selectors!(other), do: raise ArgumentError, "select expects a list of keys but received: #{inspect other}"
+  defp validate_selectors!(other), do: raise(ArgumentError, "select expects a list of keys but received: #{inspect other}")
 
   defp assert_spec!(%Schema{}=schema, key) do
     case Schema.key_present?(schema, key) do
