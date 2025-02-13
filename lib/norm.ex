@@ -14,6 +14,7 @@ defmodule Norm do
   alias Norm.Core.{
     Alt,
     AnyOf,
+    AllOf,
     Collection,
     Schema,
     Selection,
@@ -260,6 +261,18 @@ defmodule Norm do
   """
   def one_of(specs) when is_list(specs) do
     AnyOf.new(specs)
+  end
+
+  @doc """
+  Composes multiple specs into a single spec. The passed in value must conform
+  to each of the specs or an error is returned.
+
+  ## Examples
+      iex> conform!(42, all_of([spec(is_integer), spec(& &1 > 1)]))
+      42
+  """
+  def all_of(specs) when is_list(specs) and length(specs) > 0 do
+    AllOf.new(specs)
   end
 
   @doc ~S"""
