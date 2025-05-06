@@ -93,6 +93,24 @@ defmodule Norm.Core.Selection do
       end
     end
 
+    def valid?(%{required: required, schema: schema}, input, path) do
+      Conformable.valid?(schema, input, path) && valid_keys?(required, input)
+    end
+
+    defp valid_keys?([] = _required, _input), do: true
+
+    defp valid_keys?([{key, _inner} | rest], input) do
+      if valid_key?(key, input), do: valid_keys?(rest, input), else: false
+    end
+
+    defp valid_keys?([key | rest], input) do
+      if valid_key?(key, input), do: valid_keys?(rest, input), else: false
+    end
+
+    defp valid_key?(key, input) when is_map(input), do: Map.has_key?(input, key)
+
+    defp valid_key?(_key, _input), do: true
+
     defp ensure_keys([], _conformed, _path, errors), do: errors
     defp ensure_keys([{key, inner} | rest], conformed, path, errors) do
       case ensure_key(key, conformed, path) do
