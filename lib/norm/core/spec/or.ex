@@ -21,6 +21,10 @@ defmodule Norm.Core.Spec.Or do
           end
       end
     end
+
+    def valid?(%{left: l, right: r}, input, path) do
+      Conform.valid?(l, input, path) or Conform.valid?(r, input, path)
+    end
   end
 
   if Code.ensure_loaded?(StreamData) do

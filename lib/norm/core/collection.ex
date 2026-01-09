@@ -47,6 +47,21 @@ defmodule Norm.Core.Collection do
       end
     end
 
+    def valid?(%{spec: spec, opts: opts}, input, path) do
+      with :ok <- check_enumerable(input, path, opts),
+           :ok <- check_kind_of(input, path, opts),
+           :ok <- check_distinct(input, path, opts),
+           :ok <- check_counts(input, path, opts) do
+        input
+        |> Stream.with_index()
+        |> Stream.map(fn {elem, i} -> Conformable.valid?(spec, elem, path ++ [i]) end)
+        |> Enum.all?(& &1)
+
+      else
+        _ -> false
+      end
+    end
+
     defp convert(results, type) do
       Enum.into(results, type)
     end
