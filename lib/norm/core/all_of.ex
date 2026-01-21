@@ -24,5 +24,13 @@ defmodule Norm.Core.AllOf do
       end
     end
   end
+
+  defimpl Inspect do
+    import Inspect.Algebra
+
+    def inspect(sum, opts) do
+      concat(["#Norm.AllOf<", to_doc(sum.specs, opts), ">"])
+    end
+  end
 end
 
