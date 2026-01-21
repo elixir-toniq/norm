@@ -30,6 +30,26 @@ defmodule Norm do
   end
 
   @doc ~S"""
+  Coerces the value based on the specification.
+
+  ## Examples:
+
+      iex> coerce("42", spec(is_integer))
+      42
+      iex> coerce("5.0", spec(is_float))
+      5.0
+      iex> coerce("a", spec(is_binary))
+      "a"
+      iex> coerce("a", spec(is_atom))
+      :a
+      iex> coerce(%{"a" => "123"}, schema(%{a: spec(is_integer)}))
+      %{a: 123}
+  """
+  def coerce(input, spec) do
+    Norm.Coerceable.coerce(spec, input)
+  end
+
+  @doc ~S"""
   Verifies that the payload conforms to the specification. A "success tuple"
   is returned that contains either the conformed value or the error explanation.
 
