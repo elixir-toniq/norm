@@ -153,6 +153,10 @@ defmodule Norm do
     Spec.build(predicate)
   end
 
+  defmacro spec(predicate, message) do
+    Spec.build(predicate, message)
+  end
+
   @doc ~S"""
   Allows encapsulation of a spec in another function. This enables late-binding of
   specs which enables definition of recursive specs.
