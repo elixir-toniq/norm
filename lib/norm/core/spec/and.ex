@@ -27,6 +27,10 @@ defmodule Norm.Core.Spec.And do
         Conformable.conform(r, input, path)
       end
     end
+
+    def valid?(%{left: l, right: r}, input, path) do
+      Conformable.valid?(l, input, path) && Conformable.valid?(r, input, path)
+    end
   end
 
   if Code.ensure_loaded?(StreamData) do

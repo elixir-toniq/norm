@@ -73,6 +73,27 @@ defmodule Norm.Core.Schema do
       end
     end
 
+    def valid?(%Schema{specs: specs}, %{__struct__: module} = input, path) when not is_nil(module) do
+      check_specs_validity(specs, Map.from_struct(input), path)
+    end
+
+    def valid?(%Schema{specs: specs}, input, path) do
+      check_specs_validity(specs, input, path)
+    end
+
+    defp check_specs_validity(specs, input, path) do
+      input
+      |> Stream.map(fn spec -> check_spec_validity(spec, specs, path) end)
+      |> Enum.all?(& &1)
+    end
+
+    defp check_spec_validity({key, value}, specs, path) do
+      case Map.get(specs, key) do
+        nil -> true
+        spec -> Conformable.valid?(spec, value, path ++ [key])
+      end
+    end
+
     defp check_specs(specs, input, path) do
       results =
         input

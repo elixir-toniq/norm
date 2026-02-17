@@ -14,6 +14,10 @@ defmodule Norm.Generator do
     def conform(%{conformer: c}, input, path) do
       Norm.Conformer.Conformable.conform(c, input, path)
     end
+
+    def valid?(%{conformer: c}, input, path) do
+      Norm.Conformer.Conformable.valid?(c, input, path)
+    end
   end
 
   defimpl Norm.Generatable do
